@@ -31,7 +31,12 @@ def get_writeups(base_path):
                     content = f.read()
 
                 low_content = content.lower()
-                if "two star" in low_content or "2/5 difficulty" in low_content:
+                if (
+                    "two star" in low_content
+                    or "2/5 difficulty" in low_content
+                    or "★★☆☆☆" in low_content
+                    or "2/5" in low_content
+                ):
                     continue
 
                 writeups.append(
