@@ -269,9 +269,9 @@ lactf{m4yb3_th3_r34l_g4ch4_w4s_l7f3}
 
 ### References
 
-- [cookie-parser source (`index.js`)](node_modules/cookie-parser/index.js) - Signed cookie and JSON cookie processing order.
-- [Application source (`app.js`)](app.js) - Auth check and owner-gated flag logic.
-- [Express init middleware](node_modules/express/lib/middleware/init.js) - `res.locals` initialization behavior.
+- cookie-parser source (`index.js`) - Signed cookie and JSON cookie processing order.
+- Application source (`app.js`) - Auth check and owner-gated flag logic.
+- Express init middleware - `res.locals` initialization behavior.
 - [MDN `JSON.parse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse) - JSON grammar and whitespace handling.
 
 ### Tags

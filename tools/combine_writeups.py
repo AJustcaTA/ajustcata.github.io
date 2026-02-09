@@ -36,10 +36,17 @@ def get_writeups(base_path):
 
 
 def clean_markdown(content, level_increase=1):
-    # Remove existing YAML front matter if present
     content = re.sub(r"^---\s*\n.*?\n---\s*\n", "", content, flags=re.DOTALL)
 
-    # Increase header levels to make them sub-headers
+    def sanitize_links(match):
+        text = match.group(1)
+        path = match.group(2)
+        if path.startswith(("http", "/", "#")):
+            return match.group(0)
+        return text
+
+    content = re.sub(r"\[(.*?)\]\((.*?)\)", sanitize_links, content)
+
     def shift_header(match):
         return "#" * (len(match.group(1)) + level_increase) + match.group(2)
 
