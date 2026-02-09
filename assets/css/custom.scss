@@ -17,8 +17,14 @@
 
 /* Apply Monospace Font to Titles and Navigation */
 h1, h2, h3, h4, h5, h6, 
-.site-title, .site-subtitle, .sidebar-nav {
+.site-title, .sidebar-nav {
   font-family: var(--heading-font) !important;
+}
+
+/* Explicitly keep subtitle (description) as default/sans-serif */
+.site-subtitle {
+  font-family: inherit !important; /* Revert to default font */
+  font-style: italic; /* Keep the existing italic style */
 }
 
 /* Sharpen the Corners (Terminal Look) */
