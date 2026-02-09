@@ -14,7 +14,11 @@ def get_writeups(base_path):
 
         challenges = sorted(os.listdir(cat_path))
         for chall in challenges:
+            if cat == "crypto" and chall in ["six seven", "misdirection", "smol cats"]:
+                continue
+
             chall_path = os.path.join(cat_path, chall)
+
             if not os.path.isdir(chall_path):
                 continue
 
@@ -57,6 +61,9 @@ def clean_markdown(content, level_increase=1):
     content = re.sub(r"Flag format:?", "", content, flags=re.IGNORECASE)
     content = re.sub(
         r"(Provided )?Files( provided)?:?", "", content, flags=re.IGNORECASE
+    )
+    content = re.sub(
+        r"^.*?question\.txt.*?$", "", content, flags=re.MULTILINE | re.IGNORECASE
     )
 
     content = re.sub(

