@@ -1,55 +1,58 @@
 ---
 ---
 
-/* 2. Import 'JetBrains Mono' font for that developer feel */
+/* 1. Import 'JetBrains Mono' font */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
-/* --- CUSTOM HACKER STYLES --- */
+/* --- CLEAN HACKER CUSTOMIZATIONS --- */
 
 :root {
-  /* Use Monospace for headings */
   --heading-font: 'JetBrains Mono', monospace;
-  
-  /* Darker backgrounds for contrast */
   --sidebar-bg: #050505; 
-  --main-bg: #0d1117; /* GitHub Dark Dim */
+  --main-bg: #0d1117; 
 }
 
-/* Apply Monospace Font to Titles and Navigation */
+/* Apply Monospace to Headings and Site Title */
 h1, h2, h3, h4, h5, h6, 
 .site-title, .sidebar-nav {
   font-family: var(--heading-font) !important;
 }
 
-/* Explicitly keep subtitle (description) as default/sans-serif */
+/* Revert Subtitle (Description) to default font */
 .site-subtitle {
-  font-family: inherit !important; /* Revert to default font */
-  font-style: italic; /* Keep the existing italic style */
+  font-family: inherit !important;
+  font-style: italic;
 }
 
-/* Sharpen the Corners (Terminal Look) */
-.card, .post-preview, .btn, .search-wrapper, .avatar {
-  border-radius: 4px !important; /* Slight curve, mostly square */
+/* Sharpen corners for cards and buttons (Hacker feel) */
+.card, .post-preview, .btn, .search-wrapper {
+  border-radius: 4px !important;
 }
 
-/* Add a subtle border to post cards */
+/* Add subtle border to post previews */
 .post-preview {
   border: 1px solid #30363d !important;
   background-color: #0d1117 !important;
 }
 
-/* Avatar Glow Effect */
-.avatar {
-  border: 2px solid #39c5bb !important;
+/* Avatar: Keep it CIRCULAR with a Cyan Glow */
+#avatar {
+  border-radius: 50% !important; /* Forces circular shape */
+  border: 2px solid #39c5bb !important; 
   box-shadow: 0 0 15px rgba(57, 197, 187, 0.4) !important;
   transition: box-shadow 0.3s ease-in-out !important;
 }
 
-.avatar:hover {
+#avatar:hover {
   box-shadow: 0 0 25px rgba(57, 197, 187, 0.8) !important;
 }
 
-/* Sidebar Border */
+/* Sidebar Styling */
 #sidebar {
   border-right: 1px solid #30363d !important;
+}
+
+/* Fix sidebar menu spacing/alignment */
+.sidebar-nav {
+  list-style: none !important;
 }
