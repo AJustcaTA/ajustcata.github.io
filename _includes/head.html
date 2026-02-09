@@ -59,6 +59,9 @@
 
   {% include_cached favicons.html %}
 
+  <!-- Favicon override -->
+  <link rel="icon" type="image/png" href="https://github.com/ajustcata.png">
+
   <!-- Resource Hints -->
   {% unless site.assets.self_host.enabled %}
     {% for hint in site.data.origin.cors.resource_hints %}
