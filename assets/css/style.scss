@@ -1,0 +1,52 @@
+---
+---
+
+/* 1. Import the original theme */
+@import "jekyll-theme-chirpy";
+
+/* 2. Import 'JetBrains Mono' font for that developer feel */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+/* --- CUSTOM HACKER STYLES --- */
+
+:root {
+  /* Use Monospace for headings */
+  --heading-font: 'JetBrains Mono', monospace;
+  
+  /* Darker backgrounds for contrast */
+  --sidebar-bg: #050505; 
+  --main-bg: #0d1117; /* GitHub Dark Dim */
+}
+
+/* Apply Monospace Font to Titles and Navigation */
+h1, h2, h3, h4, h5, h6, 
+.site-title, .site-subtitle, .sidebar-nav {
+  font-family: var(--heading-font) !important;
+}
+
+/* Sharpen the Corners (Terminal Look) */
+.card, .post-preview, .btn, .search-wrapper, .avatar {
+  border-radius: 4px !important; /* Slight curve, mostly square */
+}
+
+/* Add a subtle border to post cards */
+.post-preview {
+  border: 1px solid #30363d;
+  background-color: #0d1117;
+}
+
+/* Avatar Glow Effect */
+#avatar {
+  border: 2px solid var(--link-color); /* Uses your Cyan color */
+  box-shadow: 0 0 15px rgba(57, 197, 187, 0.4); /* Cyan Glow */
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+#avatar:hover {
+  box-shadow: 0 0 25px rgba(57, 197, 187, 0.8); /* Stronger glow on hover */
+}
+
+/* Sidebar Border */
+#sidebar {
+  border-right: 1px solid #30363d;
+}
