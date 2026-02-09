@@ -60,8 +60,9 @@
   {% include_cached favicons.html %}
 
   <!-- Favicon override -->
-  <link rel="shortcut icon" href="{{ '/assets/img/favicons/favicon.ico' | relative_url }}" type="image/x-icon">
-  <link rel="icon" href="{{ '/assets/img/favicons/favicon.ico' | relative_url }}" type="image/x-icon">
+  <link rel="shortcut icon" href="{{ site.baseurl }}/assets/img/favicons/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="{{ site.baseurl }}/assets/img/favicons/favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="{{ site.baseurl }}/assets/img/favicons/favicon.ico">
 
   <!-- Resource Hints -->
   {% unless site.assets.self_host.enabled %}
