@@ -49,6 +49,8 @@ A collection of all my solutions from LA CTF 2026, organized by category.
 > Note: the flag is in `/flag.txt`
 
 
+
+
 Remote target:
 
 
@@ -81,7 +83,7 @@ That lets us transform decrypted plaintext from `P` to chosen `P'` at matching p
 
 #### Why this challenge is breakable
 
-The server decrypts untrusted cookie data and trusts `user.tmpfile` as a filesystem path:
+The server decrypts untrusted cookie data and trusts `user.tmpfile` as a ystem path:
 
 - Reads on `/` route
 - Writes on `/update` route
@@ -114,9 +116,9 @@ Relevant output:
 47   res.locals.user = JSON.parse(Buffer.concat([cipher.update(ct), cipher.final()]).toString("utf8"));
 48   if (!fs.existsSync(res.locals.user.tmpfile)) {
 ...
-66   fs.readFileSync(res.locals.user.tmpfile, "utf8")
+66   fs.readync(res.locals.user.tmpfile, "utf8")
 ...
-72   fs.writeFileSync(res.locals.user.tmpfile, req.body.content.slice(0, 2048), "utf8");
+72   fs.writeync(res.locals.user.tmpfile, req.body.content.slice(0, 2048), "utf8");
 ```
 
 Live cookie format check:
@@ -291,7 +293,7 @@ lactf{4pl3tc4tion_s3curi7y}
 | `curl` | Verify remote reachability, inspect headers/cookies |
 | `python3` + `requests` | Implement and run exploitation logic |
 | `sed` / `nl` | Source code inspection with line numbers |
-| `rg` | Fast search through challenge files |
+| `rg` | Fast search through challenge  |
 
 ### Lessons Learned
 
@@ -477,7 +479,7 @@ We are given a hand of 14 random bytes. We can:
 The goal is to construct a valid shellcode within the 14-byte constraint by manipulating the random number generator, then execute it to retrieve the flag.
 
 **Connection:** `nc chall.lac.tf 31338`
-**Files:** `chall`, `chall.c`, `Dockerfile`
+**** `chall`, `chall.c`, `Dockerfile`
 
 ### TL;DR
 
@@ -744,7 +746,7 @@ lactf{gg_y0u_sp3ll3d_sh3llc0d3}
 ### Challenge Description
 **Category:** Pwn  
 **Objective:** Beat the "perfect" AI in Tic-Tac-Toe to get the flag.  
-**Files:** `chall`, `chall.c`, `Dockerfile`
+**** `chall`, `chall.c`, `Dockerfile`
 
 ### Analysis
 
@@ -912,6 +914,8 @@ if __name__ == "__main__":
 > Deploy challenge (https://instancer.lac.tf/chall/misdirection?token=LTwieYb%2BSCVF0IyNtLpQpCfkcLsFOWcBuQ4VUVHX7DNkCNF4fqnQo1e9REji8KaV4sJGEpGYUISseJoOUOZNWFkZA6qxScf8papRoT90zstdDo1BQLji1vPD5EYONCN6B76VEWwn%2FV8xmCxTyFxJ%2BAww%2F3P9kc7KQtrIaN9XHeAdTkuAl1ZJUejg%2BbkzNpAnBk7frcBxcYlG)
 >
 > https://misdirection-simkv.instancer.lac.tf/
+
+
 
 
 Remote target:
@@ -1203,11 +1207,11 @@ lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}
 
 > Finally got the energy to write a trigram substitution cipher. Surely three shuffles are better than one!
 
-Given files:
+Given 
 
 - `solver.py` (partial/incorrect attempt)
 
-Flag format is `lactf{...}`.
+ is `lactf{...}`.
 
 ---
 
@@ -1253,7 +1257,7 @@ Take only alphabetic chars from `ct.txt`; call their global index `idx`.
 - if `idx % 3 == 1` -> stream 1 -> substitution `S1`
 - if `idx % 3 == 2` -> stream 2 -> substitution `S2`
 
-Because flag format is known (`lactf{`), the ciphertext ending `zjlel{...}` immediately gives anchors:
+Because  is known (`lactf{`), the ciphertext ending `zjlel{...}` immediately gives anchors:
 
 
 That greatly stabilizes automated solving.
@@ -1289,8 +1293,8 @@ stream = [i % 3 for i in range(len(alpha))]
 
 
 urls = [
-    "https://www.gutenberg.org/files/1342/1342-0.txt",
-    "https://www.gutenberg.org/files/11/11-0.txt",
+    "https://www.gutenberg.org//1342/1342-0.txt",
+    "https://www.gutenberg.org//11/11-0.txt",
 ]
 corpus = ""
 for u in urls:
@@ -1433,7 +1437,7 @@ print(decode_full(best_key))
 ### Problem Statement
 The challenge provides an RSA public key $n$ and a ciphertext $c$. The primes $p$ and $q$ used to generate $n$ are 256 digits long and consist only of the digits '6' and '7'.
 
-Files provided:
+
 - `chall.py`: The script used to generate the parameters.
 - `question.txt`: Hint and connection information.
 
@@ -1593,7 +1597,7 @@ The prime $p$ has a peculiar structure with 201 decimal digits:
 
 The prime $q$ is a standard random 670-bit prime.
 
-**Provided Files:**
+****
 - `chall.py`: Generation script showing the structure.
 - `question.txt`: Server connection info (requires PoW).
 
@@ -1805,6 +1809,8 @@ The flag refers to the bit lengths:
 > nc chall.lac.tf 31183
 >
 > (You should probably use the program provided to connect instead of netcat)
+
+
 
 
 Server/client pointers from `dist/README.md`:
@@ -2252,7 +2258,7 @@ print(r.recvall().decode())
 ### Challenge Description
 The challenge provides a "clock" group implementation over a finite field. We are given Alice and Bob's public keys and an encrypted flag. The goal is to find the shared secret using the Diffie-Hellman exchange and decrypt the flag.
 
-### Files
+### 
 - `chall.py`: The implementation of the clock group and the DH exchange.
 - `output.txt`: Public keys and the encrypted flag.
 - `question.txt`: A hint: "Don't run out of time".
@@ -2398,7 +2404,7 @@ print(unpad(AES.new(key, AES.MODE_ECB).decrypt(enc_flag), 16).decode())
 >
 > Note: if the game isn't working locally on linux, try running `export TERM=xterm-256color`
 
-Given files:
+Given 
 
 Goal: produce a game state equal to the hardcoded `winning_board`, which prints the flag.
 
@@ -2668,7 +2674,7 @@ The win path is deterministic once a valid short pair is available and forged pa
 - Name: `flag-finder`
 - Provided file: `question.txt`
 - Remote target: `https://flag-finder.chall.lac.tf/`
-- Flag format: `lactf{...}`
+-  `lactf{...}`
 
 `question.txt` only gives a short prompt and the challenge URL, so the solve path is mostly web + regex RE.
 
@@ -2811,7 +2817,10 @@ lactf{Wh47_d0_y0u_637_wh3n_y0u_cr055_4_r363x_4nd_4_n0n06r4m?_4_r363x06r4m!}
 
 > I was migrating our CTF infrastructure over to Helm charts instead of our artisan hand-crafted Kubernetes manifests we've been using for years, but I think I messed up the templates, and now it always outputs false whenever I try and render the templates ._.. Can you help me figure out how to get it to output true?
 
-Flag format:
+Challenge 
+- `helm-hell/` (a Helm chart directory)
+
+
 
 ### TL;DR
 
@@ -3012,7 +3021,7 @@ Dug around the archives and found a floppy disk containing a long-forgotten LA C
 
 - **Category**: Reverse Engineering
 - **Platform**: MS-DOS (16-bit)
-- **Files**: `CHALL.IMG` (Floppy Image), `CHALL.EXE`
+- ****: `CHALL.IMG` (Floppy Image), `CHALL.EXE`
 
 ### Initial Analysis
 The challenge provides a floppy disk image. Extracting the contents reveals a 16-bit MS-DOS executable named `CHALL.EXE`.
@@ -3314,7 +3323,7 @@ Paste the printed sequence (it’s one long line ending in `f`). The service sho
 
 
 
-Files:
+
 
 Goal: recover the flag `lactf{...}`.
 
@@ -3588,9 +3597,9 @@ python3 rev/the-three-sat-problem/solve.py
 
 > I was reading about Unicode character encodings until one day, my flag turned into Japanese! Does little-endian mean the little byte's at the end or that the characters start with the little byte?
 
-Files:
 
-Flag format: `lactf{...}`
+
+ `lactf{...}`
 
 ### Recon / Observations
 
@@ -3670,9 +3679,9 @@ Note: `s.encode("utf-16le").decode("utf-16be")` also works here; either directio
 
 > Inspired by CS 131 Programming Languages, I decided to make a context-free grammar in EBNF for my flag! But it looks like some squirrels have eaten away at the parse tree...
 
-Files:
 
-Flag format: `lactf{...}`
+
+ `lactf{...}`
 
 ### Given Grammar (EBNF)
 
@@ -3804,7 +3813,7 @@ Putting it together with the fixed `start`, underscores, and `end`:
 
 
 
-### Files
+### 
 
 
 ### TL;DR

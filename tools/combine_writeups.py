@@ -52,11 +52,12 @@ def clean_markdown(content, level_increase=1):
     content = re.sub(r"^#\s+.*$", "", content, flags=re.MULTILINE)
 
     content = re.sub(
-        r"\[Flag format is lactf\{.*?\}\.\]", "", content, flags=re.IGNORECASE
+        r"Flag format is lactf\{.*?\}\.?", "", content, flags=re.IGNORECASE
     )
-    content = re.sub(r"\[Flag format\]", "", content, flags=re.IGNORECASE)
-    content = re.sub(r"\[Files provided\]", "", content, flags=re.IGNORECASE)
-    content = re.sub(r"\[Files\]", "", content, flags=re.IGNORECASE)
+    content = re.sub(r"Flag format:?", "", content, flags=re.IGNORECASE)
+    content = re.sub(
+        r"(Provided )?Files( provided)?:?", "", content, flags=re.IGNORECASE
+    )
 
     content = re.sub(
         r"^(Provided|Challenge) files:.*?(\n\n|\n$)",
