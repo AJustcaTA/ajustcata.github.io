@@ -29,9 +29,15 @@ def get_writeups(base_path):
             if found_file:
                 with open(found_file, "r", encoding="utf-8") as f:
                     content = f.read()
+
+                low_content = content.lower()
+                if "two star" in low_content or "2/5 difficulty" in low_content:
+                    continue
+
                 writeups.append(
                     {"category": cat, "challenge": chall, "content": content}
                 )
+
     return writeups
 
 
@@ -39,6 +45,13 @@ def clean_markdown(content, level_increase=1):
     content = re.sub(r"^---\s*\n.*?\n---\s*\n", "", content, flags=re.DOTALL)
 
     content = re.sub(r"^#\s+.*$", "", content, flags=re.MULTILINE)
+
+    content = re.sub(
+        r"\[Flag format is lactf\{.*?\}\.\]", "", content, flags=re.IGNORECASE
+    )
+    content = re.sub(r"\[Flag format\]", "", content, flags=re.IGNORECASE)
+    content = re.sub(r"\[Files provided\]", "", content, flags=re.IGNORECASE)
+    content = re.sub(r"\[Files\]", "", content, flags=re.IGNORECASE)
 
     content = re.sub(
         r"^(Provided|Challenge) files:.*?(\n\n|\n$)",
