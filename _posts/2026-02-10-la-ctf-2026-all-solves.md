@@ -17,9 +17,9 @@ A collection of all my solutions from LA CTF 2026, organized by category.
 ---
 
 
-### clawcha
+### [web] clawcha
 
-## [web] clawcha
+
 
 > A great example of how type/format confusion in cookie parsing can become a full auth bypass.
 
@@ -42,18 +42,13 @@ A collection of all my solutions from LA CTF 2026, organized by category.
 
 Provided artifacts:
 
-- `app.js`
-- `inventory.js`
 - `site/` frontend assets
-- `Dockerfile`
 
 Remote target:
 
-- `https://clawcha.chall.lac.tf`
 
 Flag format:
 
-- `lactf{...}`
 
 ### TL;DR
 
@@ -89,7 +84,7 @@ So if we can transform a signed username into `r2uwu2`, we become owner.
 First, I confirmed the flag was gated by owner status and impossible RNG.
 
 ```bash
-## normal account
+
 curl -s -X POST https://clawcha.chall.lac.tf/login \
   -H "Content-Type: application/json" \
   -d '{"username":"demo_user_ov","password":"demo_pass"}' \
@@ -282,9 +277,9 @@ lactf{m4yb3_th3_r34l_g4ch4_w4s_l7f3}
 ---
 
 
-### single-trust
+### [web] single-trust
 
-## [web] single-trust
+
 
 > Exploit AES-GCM misuse by shrinking authentication to one byte, then bit-flip encrypted JSON to read `/flag.txt`.
 
@@ -313,14 +308,9 @@ lactf{m4yb3_th3_r34l_g4ch4_w4s_l7f3}
 >  
 > Note: the flag is in `/flag.txt`
 
-Provided files:
-
-- `question.txt`
-- `single-trust.zip`
 
 Remote target:
 
-- `https://single-trust.chall.lac.tf/`
 
 ### TL;DR
 
@@ -440,7 +430,7 @@ import sys
 from urllib.parse import quote, unquote
 import requests
 
-## Keep same length so we only bit-flip bytes, no re-alignment needed.
+
 OLD_PREFIX = b'{"tmpfile":"/tmp/pastestore/'
 NEW_PREFIX = b'{"tmpfile":"/flag.txt","a":"'
 
@@ -596,9 +586,9 @@ lactf{4pl3tc4tion_s3curi7y}
 ---
 
 
-### the-trial
+### [web] the-trial
 
-## [Web] The Trial
+
 
 ### Overview
 
@@ -722,9 +712,9 @@ Ah, you want the flag? Well here you go! lactf{gregor_samsa_awoke_from_wait_that
 ---
 
 
-### ScrabASM
+### [pwn] ScrabASM
 
-## [Pwn] ScrabASM
+
 
 ### Overview
 
@@ -873,11 +863,11 @@ from pwn import *
 import ctypes
 import time
 
-## Load libc for rand()
+
 libc = ctypes.CDLL("libc.so.6")
 
-## Target: Stage 1 Shellcode
-## f3 0f 1e fa (endbr64) + read(0, RSI=old_RAX, 255)
+
+
 shellcode_stage1 = b"\xf3\x0f\x1e\xfa\x48\x96\x31\xff\x31\xc0\xb2\xff\x0f\x05"
 target = list(shellcode_stage1)
 
@@ -1007,9 +997,9 @@ lactf{gg_y0u_sp3ll3d_sh3llc0d3}
 ---
 
 
-### tic-tac-no
+### [pwn] tic-tac-no
 
-## Tic-Tac-No - Writeup
+
 
 ### Challenge Description
 **Category:** Pwn  
@@ -1115,7 +1105,7 @@ So, **Row: -6, Col: -1** gives us index -23.
 ```python
 from pwn import *
 
-## context.log_level = 'debug'
+
 
 def solve():
     # p = process('./chall')
@@ -1158,9 +1148,9 @@ if __name__ == "__main__":
 ---
 
 
-### lazy-bigrams
+### [crypto] lazy-bigrams
 
-## [crypto] lazy-bigrams
+
 
 > Breaking a randomized bigram substitution by turning it into deterministic constraint solving with a known prefix.
 
@@ -1180,11 +1170,6 @@ if __name__ == "__main__":
 > Don't feel like writing a plaintext...
 >
 > Flag is all lowercase.
-
-Provided files:
-- `chall.py`
-- `ct.txt`
-- `question.txt`
 
 Connection info:
 - None (offline crypto challenge).
@@ -1460,9 +1445,9 @@ lactf{n0t_r34lly_4_b1gr4m_su8st1tu7ion_bu7_1_w1ll_tak3_1t_f0r_n0w}
 ---
 
 
-### misdirection
+### [crypto] misdirection
 
-## [crypto] misdirection
+
 
 > A crypto-themed service where the real break is a thread race on shared state, amplified with HTTP/2 concurrency.
 
@@ -1485,15 +1470,9 @@ lactf{n0t_r34lly_4_b1gr4m_su8st1tu7ion_bu7_1_w1ll_tak3_1t_f0r_n0w}
 >
 > https://misdirection-simkv.instancer.lac.tf/
 
-Provided files:
-
-- `app/`
-- `dist.tar.gz`
-- `question.txt`
 
 Remote target:
 
-- `https://misdirection-simkv.instancer.lac.tf/`
 
 ### TL;DR
 
@@ -1773,9 +1752,9 @@ lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}
 ---
 
 
-### not-so-lazy-trigrams
+### [crypto] not-so-lazy-trigrams
 
-## LA CTF 2026 - Crypto - not-so-lazy-trigrams
+
 
 ### Challenge prompt
 
@@ -1783,9 +1762,6 @@ lactf{d0nt_b3_n0nc00p3r4t1v3_w1th_my_s3rv3r}
 
 Given files:
 
-- `question.txt`
-- `chall.py`
-- `ct.txt`
 - `solver.py` (partial/incorrect attempt)
 
 Flag format is `lactf{...}`.
@@ -1836,11 +1812,6 @@ Take only alphabetic chars from `ct.txt`; call their global index `idx`.
 
 Because flag format is known (`lactf{`), the ciphertext ending `zjlel{...}` immediately gives anchors:
 
-- `S0(z) = l`
-- `S1(j) = a`
-- `S2(l) = c`
-- `S0(e) = t`
-- `S1(l) = f`
 
 That greatly stabilizes automated solving.
 
@@ -1858,9 +1829,6 @@ I used quadgram scoring + simulated annealing hillclimb:
 
 This recovered almost perfect plaintext, with only tiny ambiguity (`k/z` style swap) solved by context:
 
-- `laky` -> `lazy`
-- `wizipedia` -> `wikipedia`
-- `polariker` -> `polarizer`
 
 The plaintext is a chunk of Wikipedia text about circular polarizers, followed by the flag.
 
@@ -1876,7 +1844,7 @@ ct = open("ct.txt").read().strip()
 alpha = [ord(c)-97 for c in ct if c.isalpha()]
 stream = [i % 3 for i in range(len(alpha))]
 
-## Build quadgram model
+
 urls = [
     "https://www.gutenberg.org/files/1342/1342-0.txt",
     "https://www.gutenberg.org/files/11/11-0.txt",
@@ -1894,7 +1862,7 @@ for g, c in q.items():
     a, b, c1, d = [ord(x)-97 for x in g]
     tbl[((a*26+b)*26+c1)*26+d] = math.log10(c / Q)
 
-## Known lactf{ anchors from zjlel{
+
 fixed = [dict(), dict(), dict()]
 fixed[0][ord("z")-97] = ord("l")-97
 fixed[1][ord("j")-97] = ord("a")-97
@@ -1902,7 +1870,7 @@ fixed[2][ord("l")-97] = ord("c")-97
 fixed[0][ord("e")-97] = ord("t")-97
 fixed[1][ord("l")-97] = ord("f")-97
 
-## Frequency init
+
 freq = [Counter(), Counter(), Counter()]
 for c, s in zip(alpha, stream):
     freq[s][c] += 1
@@ -2003,9 +1971,9 @@ print(decode_full(best_key))
 ---
 
 
-### six seven
+### [crypto] six seven
 
-## [Crypto] six seven
+
 > Factoring RSA primes composed only of digits 6 and 7.
 
 ### Overview
@@ -2157,9 +2125,9 @@ lactf{wh4t_67s_15_blud_f4ct0r1ng_15_blud_31nst31n}
 ---
 
 
-### six seven again
+### [crypto] six seven again
 
-## [Crypto] six seven again
+
 > Factoring RSA where 2/3 of prime p's digits are known.
 
 ### Overview
@@ -2271,12 +2239,12 @@ We look for a root $x_0 = \delta$ such that $f(x_0) \equiv 0 \pmod p$.
 ##!/usr/bin/env sage
 from Crypto.Util.number import long_to_bytes
 
-## Challenge values (n, c, e)...
+
 n = 1648165172878088... # (truncated)
 c = 5272763146234119... # (truncated)
 e = 65537
 
-## Construct P_base (assuming middle digits are '6')
+
 high_s = "6" * 67
 mid_s = "6" * 67
 low_s = "7" * 67
@@ -2284,17 +2252,17 @@ p_base = int(high_s + mid_s + low_s)
 
 print(f"p_base: {p_base}")
 
-## Coppersmith setup
-## p = p_base + delta * 10^67
-## We search for delta.
+
+
+
 
 beta = 0.49  # p is approx n^0.498
 epsilon = 0.02
 X = 2 * 10**67  # Bound for delta
 
 P.<x> = PolynomialRing(Zmod(n))
-## Original polynomial: f = p_base + x * 10^67
-## Make monic: f_monic = f * (10^67)^-1
+
+
 coeff_inv = inverse_mod(10**67, n)
 f_monic = x + p_base * coeff_inv
 
@@ -2368,9 +2336,9 @@ The flag refers to the bit lengths:
 ---
 
 
-### slow-gold
+### [crypto] slow-gold
 
-## [crypto] slow-gold
+
 
 > A subtle bug in an MPC/ZK arithmetic consistency check lets us recover hidden permutation elements by turning one proof equation into solvable algebra.
 
@@ -2395,11 +2363,6 @@ The flag refers to the bit lengths:
 >
 > (You should probably use the program provided to connect instead of netcat)
 
-Provided files:
-
-- `dist/`
-- `question.txt`
-- `dist.tar.gz`
 
 Server/client pointers from `dist/README.md`:
 
@@ -2556,7 +2519,7 @@ P = 2305843009213693951  # 2^61 - 1
 DBG_RE = re.compile(r'DBGCHK seed=(\d+) U=(\d+) V=(\d+) W=(\d+) delta=(\d+) gates=(\d+)')
 MET_RE = re.compile(r'METRICS X=(\d+) ka=(\d+) kb=(\d+) kc=(\d+)')
 
-## Parse helper for alternating DBGCHK/METRICS lines
+
 
 def parse_pairs(path):
     lines = [x.strip() for x in open(path).read().strip().splitlines() if x.strip()]
@@ -2583,7 +2546,7 @@ def parse_pairs(path):
         })
     return out
 
-## Modular Gaussian elimination
+
 
 def gauss_mod(A, b, p):
     n = len(A)
@@ -2617,7 +2580,7 @@ def gauss_mod(A, b, p):
             break
     return b
 
-## 1) Recover (alpha, beta, gamma) from repeated X=0 traces
+
 rows0 = parse_pairs('/tmp/slowgold_x0.txt')
 A0 = []
 b0 = []
@@ -2627,10 +2590,10 @@ for r in rows0[:3]:
     b0.append((r["z"] + r["kc"]) % P)
 alpha, beta, gamma = gauss_mod(A0, b0, P)
 
-## beta acts as one hidden card value
+
 b9 = beta
 
-## 2) Build degree-9 polynomial evaluations f(X)
+
 rows = parse_pairs('/tmp/slowgold_data.txt')
 points = []
 for r in rows:
@@ -2642,13 +2605,13 @@ for r in rows:
     points.append((X, y))
 points.sort()
 
-## Interpolate degree-9 polynomial from 10 points
+
 n = 10
 VA = [[pow(x, j, P) for j in range(n)] for x, _ in points[:n]]
 Vb = [y for _, y in points[:n]]
 coeff = gauss_mod(VA, Vb, P)
 
-## Validate all collected points
+
 for x, y in points:
     s = 0
     pw = 1
@@ -2657,7 +2620,7 @@ for x, y in points:
         pw = (pw * x) % P
     assert s == y
 
-## 3) Factor polynomial over GF(P) and recover roots
+
 x = symbols('x')
 poly = Poly(sum((int(c) % P) * x**i for i, c in enumerate(coeff)), x, modulus=P)
 _, facs = factor_list(poly, modulus=P)
@@ -2668,7 +2631,7 @@ for f, e in facs:
         rt = (-b1 * pow(a1, P - 2, P)) % P
         roots.append(rt)
 
-## Convert roots of (x + v_i) form to values v_i
+
 vals = sorted([(-r) % P for r in roots])
 vals.append(b9)
 
@@ -2780,9 +2743,9 @@ lactf{1_h0p3_y0u_l1v3_th1s_0ne_t0_th3_fullest}
 ---
 
 
-### smol cats
+### [crypto] smol cats
 
-## Writeup: smol cats (Crypto)
+
 
 ### Challenge Description
 The challenge presents an RSA implementation created by a "cat" using "tiny primes." We are given a remote service to connect to, which provides the public key $(n, e)$ and a ciphertext $c$, and asks for the decrypted message $m$.
@@ -2804,31 +2767,31 @@ In this challenge, $n$ is approximately $10^{60}$ (around 200 bits). While much 
 from pwn import *
 from sympy import factorint
 
-## Connect to the remote challenge
+
 r = remote("chall.lac.tf", 31224)
 
-## Receive and parse parameters
+
 output = r.recvuntil(b"How many treats do I want?").decode()
 lines = output.split("\n")
 n = int([line for line in lines if "n = " in line][0].split("=")[1].strip())
 e = int([line for line in lines if "e = " in line][0].split("=")[1].strip())
 c = int([line for line in lines if "c = " in line][0].split("=")[1].strip())
 
-## Factor the modulus n
+
 factors = factorint(n)
 p, q = list(factors.keys())
 
-## Calculate private exponent d
+
 phi = (p - 1) * (q - 1)
 d = pow(e, -1, phi)
 
-## Decrypt the ciphertext
+
 m = pow(c, d, n)
 
-## Send the decrypted number back
+
 r.sendline(str(m).encode())
 
-## Retrieve the flag
+
 print(r.recvall().decode())
 ```
 
@@ -2839,9 +2802,9 @@ print(r.recvall().decode())
 ---
 
 
-### the-clock
+### [crypto] the-clock
 
-## LA CTF 2026 - The Clock Writeup
+
 
 ### Challenge Description
 The challenge provides a "clock" group implementation over a finite field. We are given Alice and Bob's public keys and an encrypted flag. The goal is to find the shared secret using the Diffie-Hellman exchange and decrypt the flag.
@@ -2967,9 +2930,9 @@ print(unpad(AES.new(key, AES.MODE_ECB).decrypt(enc_flag), 16).decode())
 ---
 
 
-### ttyspin
+### [crypto] ttyspin
 
-## [crypto] ttyspin
+
 
 > A practical SHA-256 length-extension attack against a secret-prefix checksum wrapped around a Tetris save importer.
 
@@ -2993,9 +2956,6 @@ print(unpad(AES.new(key, AES.MODE_ECB).decrypt(enc_flag), 16).decode())
 > Note: if the game isn't working locally on linux, try running `export TERM=xterm-256color`
 
 Given files:
-- `question.txt`
-- `board.py`
-- `game.py`
 
 Goal: produce a game state equal to the hardcoded `winning_board`, which prints the flag.
 
@@ -3018,8 +2978,6 @@ sha256(SECRET || username || save)
 ```
 
 (with `strip()` applied before hashing). This is **not** HMAC. For plain `SHA256(secret || message)`, if an attacker knows:
-- `hash(secret || message)`
-- `len(secret)`
 
 then they can compute a valid hash for:
 
@@ -3057,21 +3015,21 @@ nl -ba board.py | sed -n '85,113p'
 Key findings:
 
 ```python
-## game.py lines 55-57
+
 def make_checksum(username, save_code):
     assert len(SECRET) == 40
     return hashlib.sha256((SECRET + username + save_code).strip()).hexdigest()
 ```
 
 ```python
-## game.py lines 320-323
+
 if (game_board.board == winning_board):
     print("Congratulations! You won!")
     print(FLAG)
 ```
 
 ```python
-## board.py line 100
+
 current, hold, nexts, queue, board = save.decode().split("|")
 ```
 
@@ -3081,7 +3039,6 @@ So the attack surface is the import checksum, and the objective is crafting a de
 
 The bug is a classic crypto misuse:
 
-- `sha256(secret || msg)` with known `len(secret)=40`
 - user controls `username` and `save`
 - verification compares hex checksum directly
 
@@ -3124,11 +3081,11 @@ PORT = 32123
 USER = "ttyspin"
 PASSWORD = "ttyspin"
 
-## Recovered legit pair from automated export search
+
 SHORT_SAVE = "J|S|ZISL|TO|" + " " * 200
 SHORT_CHECKSUM = "2cb8fb176b789b23c2bac5538c48fe8ab8955b97d41f14166bba5b44b36023a6"
 
-## Build target save that decodes to winning board
+
 WINNING_BOARD = [
     [0,0,0,0,0,0,0,0,0,0],[7,0,0,0,0,0,0,0,0,0],[0,4,0,0,0,0,0,0,0,0],[0,0,6,0,0,0,0,0,0,0],
     [0,0,0,3,0,0,0,0,0,0],[0,0,0,0,5,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,2,0,0,0],
@@ -3139,10 +3096,10 @@ WINNING_BOARD = [
 PIECES = "TJLSZOI"
 
 board_text = "".join(" " if v == 0 else PIECES[v - 1] for row in WINNING_BOARD for v in row)
-## trailing non-space prevents strip() from removing meaningful trailing board spaces
+
 TARGET_SAVE = (f"T| |TJLS||{board_text}".encode() + b"T")
 
-## length extension
+
 orig = SHORT_SAVE.rstrip().encode()
 new_hash, new_payload = hashpumpy.hashpump(SHORT_CHECKSUM, orig, TARGET_SAVE, 40)
 forged_username = new_payload[:-len(TARGET_SAVE)]
@@ -3155,7 +3112,7 @@ print("[*] forged_checksum =", new_hash)
 ssh_cmd = f"ssh -tt -o StrictHostKeyChecking=no -o UserKnownHostsFile=/tmp/known_hosts -p {PORT} {USER}@{HOST}"
 child = pexpect.spawn(ssh_cmd, timeout=10, encoding=None)
 
-## login + import flow
+
 for _ in range(200):
     data = child.read_nonblocking(size=65535, timeout=0.1)
     if b"password:" in data.lower():
@@ -3258,9 +3215,9 @@ The win path is deterministic once a valid short pair is available and forged pa
 ---
 
 
-### flag-finder
+### [rev] flag-finder
 
-## LA CTF 2026 - rev/flag-finder Writeup
+
 
 ### Challenge info
 
@@ -3390,9 +3347,9 @@ lactf{Wh47_d0_y0u_637_wh3n_y0u_cr055_4_r363x_4nd_4_n0n06r4m?_4_r363x06r4m!}
 ---
 
 
-### helm hell
+### [rev] helm hell
 
-## [rev] helm hell
+
 
 > Reverse a Helm-chart-implemented tape VM and recover the exact `.Values.input` that makes it render `true`.
 
@@ -3411,12 +3368,7 @@ lactf{Wh47_d0_y0u_637_wh3n_y0u_cr055_4_r363x_4nd_4_n0n06r4m?_4_r363x06r4m!}
 
 > I was migrating our CTF infrastructure over to Helm charts instead of our artisan hand-crafted Kubernetes manifests we've been using for years, but I think I messed up the templates, and now it always outputs false whenever I try and render the templates ._.. Can you help me figure out how to get it to output true?
 
-Challenge files:
-- `helm-hell/` (a Helm chart directory)
-- `question.txt`
-
 Flag format:
-- `lactf{...}`
 
 ### TL;DR
 
@@ -3608,9 +3560,9 @@ lactf{t4k1ng_7h3_h3lm_0f_h31m_73mp14t3s}
 ---
 
 
-### lactf-1986
+### [rev] lactf-1986
 
-## lactf-1986 Writeup
+
 
 ### Challenge Description
 Dug around the archives and found a floppy disk containing a long-forgotten LA CTF challenge from 1986. Can you recover the flag?
@@ -3704,9 +3656,9 @@ for s in range(0x100000):
 ---
 
 
-### ooo
+### [rev] ooo
 
-## LAC 2026 - Rev / ooo Writeup
+
 
 ### Challenge Overview
 We are provided with a Python script `ooo.py` and a `question.txt`.
@@ -3761,8 +3713,6 @@ The array `ὁ` contains the sums of consecutive characters.
 
 We know the flag starts with `lactf{`.
 - `guess[0]` = `'l'` (108)
-- `guess[1] = ὁ[0] - guess[0]`
-- `guess[2] = ὁ[1] - guess[1]`
 - And so on...
 
 Although the loop in the script goes up to `len(ὁ)-1`, the array `ὁ` has 27 elements. This implies there are 27 pairs, describing a flag of length 28. The final element of the array (`223`) allows us to calculate the final character `}`.
@@ -3773,10 +3723,10 @@ Although the loop in the script goes up to `len(ὁ)-1`, the array `ὁ` has 27 
 data = [205, 196, 215, 218, 225, 226, 1189, 2045, 2372, 9300, 8304, 660, 8243, 
         16057, 16113, 16057, 16004, 16007, 16006, 8561, 805, 346, 195, 201, 154, 146, 223]
 
-## We know the flag starts with 'l'
+
 flag = [ord('l')]
 
-## Calculate subsequent characters
+
 for val in data:
     next_char = val - flag[-1]
     flag.append(next_char)
@@ -3792,9 +3742,9 @@ Running the solver gives the flag:
 ---
 
 
-### starless-c
+### [rev] starless-c
 
-## starless-c (rev) Writeup
+
 
 ### TL;DR
 
@@ -3851,7 +3801,6 @@ Practical view: you are shuffling a limited number of “NOP tokens” across se
 
 Pressing `f` in a room does a direct jump to the base of:
 
-- `0x6767a000`
 
 Those segment bases contain:
 
@@ -3868,8 +3817,6 @@ The chain is:
 
 `0x42069000` prints extra flavor text, then does:
 
-- `open("flag.txt", O_RDONLY)`
-- `sendfile(1, fd, NULL, 0x100)`
 
 So the objective is to ensure the first 4 bytes at each of these bases are `0x90 0x90 0x90 0x90` at the moment you press `f`.
 
@@ -3920,13 +3867,11 @@ Paste the printed sequence (it’s one long line ending in `f`). The service sho
 ---
 
 
-### the-fish
+### [rev] the-fish
 
-## the-fish (rev) Writeup
+
 
 Files:
-- `rev/the-fish/question.txt`
-- `rev/the-fish/fish.py`
 
 Goal: recover the flag `lactf{...}`.
 
@@ -4069,9 +4014,9 @@ lactf{7h3r3_m4y_83_50m3_155u35_w17h_7h15_1f_7h3_c011472_c0nj3c7ur3_15_d15pr0v3n}
 ---
 
 
-### the-three-sat-problem
+### [rev] the-three-sat-problem
 
-## the-three-sat-problem (rev) writeup
+
 
 ### Summary
 The binary asks for a 1279-character bitstring (`'0'`/`'1'`). Internally it evaluates a giant straight-line boolean circuit (a “3-SAT instance”) over those bits. If the circuit evaluates to `true`, it prints 40 bytes that are assembled from selected input bits. Those 40 bytes are the flag.
@@ -4083,7 +4028,6 @@ Repro script: `python3 rev/the-three-sat-problem/solve.py`
 ### 1. Recon: what does the program want?
 Running `three_sat_problem` prints:
 
-- `Have you solved the Three-Sat Problem?`
 - then exits with `Please be serious...` unless you provide a very specific input.
 
 Disassembling the entrypoint shows it:
@@ -4142,10 +4086,7 @@ We emulate the SAT function instruction-by-instruction, but track only **one bit
 Instruction semantics under this 1-bit model:
 
 - `mov dst, src`: copy the boolean value
-- `not dst`: `dst = Not(dst)`
-- `and/or/xor dst, src`: boolean `And/Or/Xor`
 - `push/pop` and `sub/add rsp, imm`: only update a concrete `rsp` so stack addressing works
-- `ret`: stop; the return value is the final boolean value in `rax` / `al`
 
 This works here because the SAT function uses only operations that make sense under boolean semantics, and (critically) it masks values down to one bit throughout the circuit.
 
@@ -4196,18 +4137,15 @@ python3 rev/the-three-sat-problem/solve.py
 ---
 
 
-### endians
+### [misc] endians
 
-## Endians (Misc)
+
 
 ### Prompt
 
 > I was reading about Unicode character encodings until one day, my flag turned into Japanese! Does little-endian mean the little byte's at the end or that the characters start with the little byte?
 
 Files:
-- `misc/endians/chall.txt`
-- `misc/endians/gen.py`
-- `misc/endians/question.txt`
 
 Flag format: `lactf{...}`
 
@@ -4231,9 +4169,6 @@ This prints:
 
 Those are suspicious: if you swap the bytes in each 16-bit value (e.g. `0x6c00 -> 0x006c`), you get ASCII:
 
-- `0x006c` = `l`
-- `0x0061` = `a`
-- `0x0063` = `c`
 - ...
 
 So the file is effectively “ASCII characters stored as UTF-16 code units with the bytes flipped”.
@@ -4267,7 +4202,7 @@ from pathlib import Path
 
 s = Path("misc/endians/chall.txt").read_text(encoding="utf-8")
 
-## Swap the byte order within each UTF-16 code unit.
+
 flag = s.encode("utf-16be").decode("utf-16le")
 
 print(flag)
@@ -4284,18 +4219,15 @@ Note: `s.encode("utf-16le").decode("utf-16be")` also works here; either directio
 ---
 
 
-### grammar
+### [misc] grammar
 
-## Grammar (Misc)
+
 
 ### Prompt
 
 > Inspired by CS 131 Programming Languages, I decided to make a context-free grammar in EBNF for my flag! But it looks like some squirrels have eaten away at the parse tree...
 
 Files:
-- `misc/grammar/question.txt`
-- `misc/grammar/grammar-notes.txt`
-- `misc/grammar/tree.png`
 
 Flag format: `lactf{...}`
 
@@ -4383,11 +4315,6 @@ You can map each color to a fragment type by looking at its branching:
 
 From the tree, this mapping is:
 
-- `A = c`
-- `B = cd`
-- `C = vd`
-- `D = d`
-- `E = vc`
 
 (You can sanity-check this against the final words; it matches perfectly.)
 
@@ -4396,22 +4323,10 @@ From the tree, this mapping is:
 The grammar encodes each `con/vow/dig` using a chain of nonterminals:
 
 Consonants:
-- `con` depth 1  -> `f`
-- `con` depth 2  -> `g`
-- `con` depth 3  -> `p`
-- `con` depth 4  -> `t`
-- `con` depth 5  -> `r`
 
 Vowels:
-- `vow` depth 1  -> `e`
-- `vow` depth 2  -> `o`
-- `vow` depth 3  -> `u`
 
 Digits:
-- `dig` depth 1  -> `0`
-- `dig` depth 2  -> `1`
-- `dig` depth 3  -> `4`
-- `dig` depth 4  -> `5`
 
 In the parse tree, each step down that chain is drawn as another black circle in a vertical stack (some connecting lines are missing, but the circles are still there). So you decode a terminal by counting how many black circles are in its stack before the terminal box.
 
@@ -4420,26 +4335,14 @@ In the parse tree, each step down that chain is drawn as another black circle in
 Using the fragment-color sequence per word, then counting the stacks to get the specific `con/vow/dig` terminals:
 
 WORD1 (`A B A C D E`):
-- `A=c`: `con` depth 3 -> `p`
-- `B=cd`: `con` depth 5 -> `r`, `dig` depth 1 -> `0`  => `r0`
-- `A=c`: `con` depth 1 -> `f`
-- `C=vd`: `vow` depth 1 -> `e`, `dig` depth 4 -> `5` => `e5`
-- `D=d`: `dig` depth 4 -> `5`
-- `E=vc`: `vow` depth 2 -> `o`, `con` depth 5 -> `r` => `or`
 
 So WORD1 = `pr0fe55or`.
 
 WORD2 (`B C`):
-- `B=cd`: `con` depth 3 -> `p`, `dig` depth 3 -> `4` => `p4`
-- `C=vd`: `vow` depth 3 -> `u`, `dig` depth 2 -> `1` => `u1`
 
 So WORD2 = `p4u1`.
 
 WORD3 (`E A E A`):
-- `E=vc`: `vow` depth 1 -> `e`, `con` depth 2 -> `g` => `eg`
-- `A=c`: `con` depth 2 -> `g`
-- `E=vc`: `vow` depth 1 -> `e`, `con` depth 5 -> `r` => `er`
-- `A=c`: `con` depth 4 -> `t`
 
 So WORD3 = `eggert`.
 
@@ -4454,14 +4357,12 @@ Putting it together with the fixed `start`, underscores, and `end`:
 ---
 
 
-### not-just-a-hobby
+### [misc] not-just-a-hobby
 
-## not-just-a-hobby (misc) Writeup
+
 
 ### Files
 
-- `misc/not-just-a-hobby/question.txt`
-- `misc/not-just-a-hobby/v.v`
 
 ### TL;DR
 
@@ -4491,7 +4392,6 @@ Many constants are written as `7'dNNN`, e.g. `x == 7'd588`.
 
 In Verilog, a sized constant like `7'd588` is truncated to 7 bits, so:
 
-- `7'd588 == (588 mod 128) == 76`
 
 So those comparisons are actually valid for a 7-bit input.
 

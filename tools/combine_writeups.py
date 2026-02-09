@@ -38,6 +38,16 @@ def get_writeups(base_path):
 def clean_markdown(content, level_increase=1):
     content = re.sub(r"^---\s*\n.*?\n---\s*\n", "", content, flags=re.DOTALL)
 
+    content = re.sub(r"^#\s+.*$", "", content, flags=re.MULTILINE)
+
+    content = re.sub(
+        r"^(Provided|Challenge) files:.*?(\n\n|\n$)",
+        "",
+        content,
+        flags=re.DOTALL | re.MULTILINE | re.IGNORECASE,
+    )
+    content = re.sub(r"^- `.*?`(\n|$)", "", content, flags=re.MULTILINE)
+
     def sanitize_links(match):
         text = match.group(1)
         path = match.group(2)
@@ -78,11 +88,12 @@ def main():
             output.append(f"\n## {current_cat.upper()}\n")
             output.append("---\n")
 
-        output.append(f"\n### {w['challenge']}\n")
+        output.append(f"\n### [{w['category']}] {w['challenge']}\n")
         output.append(clean_markdown(w["content"]))
         output.append("\n---\n")
 
     output.append("\n{% endraw %}")
+
     post_path = "/home/jst/Documents/Web/ajustcata.github.io/_posts/2026-02-10-la-ctf-2026-all-solves.md"
     with open(post_path, "w", encoding="utf-8") as f:
         f.write("\n".join(output))
