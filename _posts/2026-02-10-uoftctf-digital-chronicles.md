@@ -1,5 +1,5 @@
 ---
-title: UofTCTF - Digital Chronicles
+title: UofTCTF 2026 - Digital Chronicles
 date: 2026-02-10 01:02:00 +0800
 categories: [Writeups, UofTCTF]
 tags: [ctf, uoftctf, reverse, misc, osint]
