@@ -106,7 +106,7 @@ def main():
     output.append("\n{% raw %}")
     output.append("\n# LA CTF 2026 Writeups\n")
     output.append(
-        "A collection of all my solutions from LA CTF 2026, organized by category.\n"
+        "A collection of my highlighted solutions from LA CTF 2026, organized by category.\n"
     )
 
     current_cat = ""
@@ -130,4 +130,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

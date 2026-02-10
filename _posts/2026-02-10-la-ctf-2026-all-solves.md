@@ -9,7 +9,7 @@ tags: [ctf, web, pwn, crypto, rev, misc]
 
 # LA CTF 2026 Writeups
 
-A collection of all my solutions from LA CTF 2026, organized by category.
+A collection of my highlighted solutions from LA CTF 2026, organized by category.
 
 
 ## WEB
