@@ -56,14 +56,14 @@ def main():
 
     output = []
     output.append("---")
-    output.append("title: UofTCTF 2026 - Digital Chronicles")
+    output.append("title: UofTCTF 2026")
     output.append("date: 2026-02-10 01:02:00 +0800")
     output.append("categories: [Writeups, UofTCTF]")
     output.append("tags: [ctf, uoftctf, reverse, misc, osint]")
     output.append("---")
-
     output.append("\n{% raw %}")
-    output.append("\n# 🕵️ UofTCTF Digital Chronicles\n")
+    output.append("\n# UofTCTF 2026\n")
+
     output.append(
         '> "In the world of binary and obfuscation, the truth is often hidden in plain sight. These are the chronicles of my journey through UofTCTF, where every line of code tells a story and every solved enigma is a step forward in the digital abyss."\n'
     )

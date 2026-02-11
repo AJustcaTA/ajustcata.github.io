@@ -1,5 +1,5 @@
 ---
-title: UofTCTF 2026 - Digital Chronicles
+title: UofTCTF 2026
 date: 2026-02-10 01:02:00 +0800
 categories: [Writeups, UofTCTF]
 tags: [ctf, uoftctf, reverse, misc, osint]
@@ -7,7 +7,7 @@ tags: [ctf, uoftctf, reverse, misc, osint]
 
 {% raw %}
 
-# 🕵️ UofTCTF Digital Chronicles
+# UofTCTF 2026
 
 > "In the world of binary and obfuscation, the truth is often hidden in plain sight. These are the chronicles of my journey through UofTCTF, where every line of code tells a story and every solved enigma is a step forward in the digital abyss."
 
