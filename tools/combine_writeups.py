@@ -14,6 +14,8 @@ def get_writeups(base_path):
 
         challenges = sorted(os.listdir(cat_path))
         for chall in challenges:
+            if cat == "web" and chall == "the-trial":
+                continue
             if cat == "crypto" and chall in ["six seven", "misdirection", "smol cats"]:
                 continue
             if cat == "rev" and chall in ["ooo", "the-fish"]:
@@ -98,13 +100,13 @@ def main():
 
     output = []
     output.append("---")
-    output.append("title: LA CTF 2026 - All Solves")
+    output.append("title: LA CTF 2026")
     output.append("date: 2026-02-10 00:01:00 +0800")
     output.append("categories: [Writeups, LA CTF]")
     output.append("tags: [ctf, web, pwn, crypto, rev, misc]")
     output.append("---")
     output.append("\n{% raw %}")
-    output.append("\n# LA CTF 2026 Writeups\n")
+    output.append("\n# LA CTF 2026\n")
     output.append(
         "A collection of my highlighted solutions from LA CTF 2026, organized by category.\n"
     )
