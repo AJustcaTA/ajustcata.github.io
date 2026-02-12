@@ -16,9 +16,19 @@ def get_writeups(base_path):
         for chall in challenges:
             if cat == "web" and chall == "the-trial":
                 continue
-            if cat == "crypto" and chall in ["six seven", "misdirection", "smol cats"]:
+            if cat == "crypto" and chall in [
+                "six seven",
+                "misdirection",
+                "smol cats",
+                "not-so-lazy-trigrams",
+            ]:
                 continue
-            if cat == "rev" and chall in ["ooo", "the-fish"]:
+            if cat == "rev" and chall in [
+                "ooo",
+                "the-fish",
+                "lactf-1986",
+                "the-three-sat-problem",
+            ]:
                 continue
 
             chall_path = os.path.join(cat_path, chall)
