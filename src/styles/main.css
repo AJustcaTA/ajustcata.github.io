@@ -1,8 +1,16 @@
 @tailwind components;
 
+:root {
+    --font-hacker: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
 @layer components {
     .card-base {
-        @apply rounded-[var(--radius-large)] overflow-hidden bg-[var(--card-bg)] transition;
+        @apply rounded-[var(--radius-large)] overflow-hidden bg-[var(--card-bg)] transition border border-black/5 dark:border-white/10;
+    }
+    h1, h2, h3, #navbar .btn-plain, #nav-menu-panel .font-bold, .profile-name {
+        font-family: var(--font-hacker);
+        letter-spacing: 0.02em;
     }
     h1, h2, h3, h4, h5, h6, p, a, span, li, ul, ol, blockquote, code, pre, table, th, td, strong {
         @apply transition;
@@ -110,6 +118,22 @@
     .btn-regular-dark.success {
         @apply bg-[oklch(0.75_0.14_var(--hue))] dark:bg-[oklch(0.75_0.14_var(--hue))]
     }
+
+    .profile-avatar {
+        @apply border border-black/10 dark:border-white/20;
+    }
+
+    .profile-avatar img {
+        @apply transition duration-300;
+    }
+}
+
+:root.dark .profile-avatar {
+    box-shadow: 0 0 0 1px oklch(0.72 0.10 var(--hue) / 0.24), 0 0 18px oklch(0.72 0.10 var(--hue) / 0.16);
+}
+
+.profile-avatar:hover img {
+    transform: scale(1.03);
 }
 
 .custom-md img, #post-cover img {
