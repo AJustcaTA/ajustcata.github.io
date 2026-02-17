@@ -50,9 +50,36 @@ let links: NavBarLink[] = navBarConfig.links.map(
                         <Icon name="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
                     </button>
             )}
-            <button aria-label="Toggle Theme" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch">
-                <Icon name="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem]"></Icon>
-            </button>
+            <div class="relative z-50">
+                <button aria-label="Light/Dark Mode" class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch">
+                    <div id="scheme-icon-light" class="absolute opacity-0">
+                        <Icon name="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem]"></Icon>
+                    </div>
+                    <div id="scheme-icon-dark" class="absolute opacity-0">
+                        <Icon name="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem]"></Icon>
+                    </div>
+                    <div id="scheme-icon-auto" class="absolute opacity-0">
+                        <Icon name="material-symbols:radio-button-partial-outline" class="text-[1.25rem]"></Icon>
+                    </div>
+                </button>
+
+                <div id="light-dark-panel" class="hidden lg:block absolute transition float-panel-closed top-11 -right-2 pt-5">
+                    <div class="card-base float-panel p-2">
+                        <button id="theme-light" class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5">
+                            <Icon name="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem] mr-3"></Icon>
+                            Light
+                        </button>
+                        <button id="theme-dark" class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5">
+                            <Icon name="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem] mr-3"></Icon>
+                            Dark
+                        </button>
+                        <button id="theme-auto" class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95">
+                            <Icon name="material-symbols:radio-button-partial-outline" class="text-[1.25rem] mr-3"></Icon>
+                            System
+                        </button>
+                    </div>
+                </div>
+            </div>
             <button aria-label="Menu" name="Nav Menu" class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden" id="nav-menu-switch">
                 <Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
             </button>
@@ -63,23 +90,66 @@ let links: NavBarLink[] = navBarConfig.links.map(
 </div>
 
 <script>
-function switchTheme() {
-    if (localStorage.theme === 'dark') {
-        document.documentElement.classList.remove('dark');
-        localStorage.theme = 'light';
+const LIGHT_MODE = "light";
+const DARK_MODE = "dark";
+const AUTO_MODE = "auto";
+
+function getStoredTheme() {
+    return localStorage.getItem("theme") || AUTO_MODE;
+}
+
+function applyThemeToDocument(theme: string) {
+    if (theme === LIGHT_MODE) {
+        document.documentElement.classList.remove("dark");
+        return;
+    }
+    if (theme === DARK_MODE) {
+        document.documentElement.classList.add("dark");
+        return;
+    }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.classList.add("dark");
     } else {
-        document.documentElement.classList.add('dark');
-        localStorage.theme = 'dark';
+        document.documentElement.classList.remove("dark");
     }
 }
 
+function updateThemeUI(theme: string) {
+    const lightBtn = document.getElementById("theme-light");
+    const darkBtn = document.getElementById("theme-dark");
+    const autoBtn = document.getElementById("theme-auto");
+
+    lightBtn?.classList.toggle("current-theme-btn", theme === LIGHT_MODE);
+    darkBtn?.classList.toggle("current-theme-btn", theme === DARK_MODE);
+    autoBtn?.classList.toggle("current-theme-btn", theme === AUTO_MODE);
+
+    document.getElementById("scheme-icon-light")?.classList.toggle("opacity-0", theme !== LIGHT_MODE);
+    document.getElementById("scheme-icon-dark")?.classList.toggle("opacity-0", theme !== DARK_MODE);
+    document.getElementById("scheme-icon-auto")?.classList.toggle("opacity-0", theme !== AUTO_MODE);
+}
+
+function setTheme(theme: string) {
+    localStorage.setItem("theme", theme);
+    applyThemeToDocument(theme);
+    updateThemeUI(theme);
+}
+
 function loadButtonScript() {
-    let switchBtn = document.getElementById("scheme-switch");
+    const switchBtn = document.getElementById("scheme-switch");
     if (switchBtn) {
         switchBtn.onclick = function () {
-            switchTheme()
+            const panel = document.getElementById("light-dark-panel");
+            panel?.classList.toggle("float-panel-closed");
         };
     }
+
+    const lightBtn = document.getElementById("theme-light");
+    const darkBtn = document.getElementById("theme-dark");
+    const autoBtn = document.getElementById("theme-auto");
+
+    lightBtn && (lightBtn.onclick = function () { setTheme(LIGHT_MODE); });
+    darkBtn && (darkBtn.onclick = function () { setTheme(DARK_MODE); });
+    autoBtn && (autoBtn.onclick = function () { setTheme(AUTO_MODE); });
 
     let settingBtn = document.getElementById("display-settings-switch");
     if (settingBtn) {
@@ -100,6 +170,8 @@ function loadButtonScript() {
             }
         };
     }
+
+    updateThemeUI(getStoredTheme());
 }
 
 loadButtonScript();
