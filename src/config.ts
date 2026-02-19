@@ -39,7 +39,7 @@ export const navBarConfig: NavBarConfig = {
 export const profileConfig: ProfileConfig = {
 	avatar: "https://github.com/ajustcata.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "Jst",
-	bio: "Cybersecurity student focused on DFIR, web security, and CTF writeups.",
+	bio: "Cybersecurity student focused on DFIR, web security, and CTF.",
 	links: [
 		{
 			name: "GitHub",
