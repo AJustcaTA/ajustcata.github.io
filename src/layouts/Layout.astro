@@ -365,12 +365,130 @@ function showBanner() {
 	banner.classList.remove('opacity-0', 'scale-105');
 }
 
+let mermaidModulePromise: Promise<any> | null = null;
+let mermaidApi: any | null = null;
+let mermaidLastTheme: string | null = null;
+
+function getMermaidTheme(): string {
+	return document.documentElement.classList.contains("dark")
+		? "dark"
+		: "default";
+}
+
+async function loadMermaid(): Promise<any> {
+	if (mermaidApi) {
+		return mermaidApi;
+	}
+	if (!mermaidModulePromise) {
+		mermaidModulePromise = import("mermaid").then((m) => {
+			mermaidApi = (m as any).default ?? m;
+			return mermaidApi;
+		});
+	}
+	return mermaidModulePromise;
+}
+
+function extractMermaidSource(pre: Element): string {
+	// Expressive Code wraps each line into `.ec-line .code`
+	const codeLines = Array.from(pre.querySelectorAll(".ec-line .code"));
+	if (codeLines.length > 0) {
+		return codeLines
+			.map((el) => (el.textContent ?? "").replace(/\u00a0/g, " "))
+			.join("\n")
+			.trim();
+	}
+	return (pre.textContent ?? "").trim();
+}
+
+function replaceMermaidBlock(pre: HTMLPreElement): HTMLElement | null {
+	const source = extractMermaidSource(pre);
+	if (!source) {
+		return null;
+	}
+
+	const wrapper = pre.closest(".expressive-code") ?? pre;
+	const container = document.createElement("div");
+	container.className = "mermaid-diagram";
+
+	const mermaidEl = document.createElement("div");
+	mermaidEl.className = "mermaid";
+	mermaidEl.textContent = source;
+	mermaidEl.setAttribute("data-mermaid-src", JSON.stringify(source));
+
+	container.appendChild(mermaidEl);
+	wrapper.replaceWith(container);
+
+	return mermaidEl;
+}
+
+async function renderMermaidDiagrams(force = false): Promise<void> {
+	const pres = Array.from(
+		document.querySelectorAll("pre[data-language='mermaid']"),
+	) as HTMLPreElement[];
+	const newNodes: HTMLElement[] = [];
+	for (const pre of pres) {
+		const node = replaceMermaidBlock(pre);
+		if (node) {
+			newNodes.push(node);
+		}
+	}
+
+	const nodesToRun = force
+		? (Array.from(
+				document.querySelectorAll(".mermaid[data-mermaid-src]"),
+			) as HTMLElement[])
+		: newNodes;
+
+	if (nodesToRun.length === 0) {
+		return;
+	}
+
+	const mermaid = await loadMermaid();
+	const theme = getMermaidTheme();
+	if (mermaidLastTheme !== theme) {
+		mermaid.initialize({
+			startOnLoad: false,
+			theme,
+			securityLevel: "strict",
+		});
+		mermaidLastTheme = theme;
+	}
+
+	if (force) {
+		for (const el of nodesToRun) {
+			const srcJson = el.getAttribute("data-mermaid-src");
+			if (!srcJson) continue;
+			el.removeAttribute("data-processed");
+			el.textContent = JSON.parse(srcJson);
+		}
+	}
+
+	try {
+		await mermaid.run({ nodes: nodesToRun });
+	} catch (err) {
+		console.warn("[MERMAID] Render failed", err);
+	}
+}
+
+// Re-render Mermaid when the theme (dark class) changes.
+let lastDark = document.documentElement.classList.contains("dark");
+new MutationObserver(() => {
+	const isDark = document.documentElement.classList.contains("dark");
+	if (isDark === lastDark) return;
+	lastDark = isDark;
+	void renderMermaidDiagrams(true);
+}).observe(document.documentElement, {
+	attributes: true,
+	attributeFilter: ["class"],
+});
+
 function init() {
 	// disableAnimation()()		// TODO
 	loadTheme();
 	loadHue();
 	initCustomScrollbar();
 	showBanner();
+	void renderMermaidDiagrams();
 }
 
 /* Load settings when entering the site */
@@ -434,6 +552,8 @@ const setup = () => {
 		if (heightExtend) {
 			heightExtend.classList.remove('hidden')
 		}
+
+		void renderMermaidDiagrams();
 	});
 	window.swup.hooks.on('visit:end', (_visit: {to: {url: string}}) => {
 		setTimeout(() => {

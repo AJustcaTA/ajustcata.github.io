@@ -144,18 +144,18 @@ After I got a shell, I read the flag from the filesystem.
 
 ```mermaid
 flowchart TD
-    A[Overflow in main: read 0x200 into 0x100] --> B[Overwrite saved RBP + RET]
-    B --> C[Pivot with leave;ret to controlled pages]
-    C --> D[Stage data at c00100 and c00400]
-    D --> E[2-byte overwrite read@got low16]
-    E --> F[read@plt now jumps to syscall;ret]
-    F --> G[First syscall is read -> returns 15]
-    G --> H[Second syscall number 15 -> rt_sigreturn]
-    H --> I[Load SigreturnFrame]
-    I --> J[Set rax=59 rdi=/bin/sh rip=read@plt]
-    J --> K[execve(/bin/sh,0,0)]
-    K --> L[cat flag paths]
-    L --> M[BITSCTF flag]
+    A["Overflow in main: read 0x200 into 0x100"] --> B["Overwrite saved RBP + RET"]
+    B --> C["Pivot with leave; ret to controlled pages"]
+    C --> D["Stage data at c00100 and c00400"]
+    D --> E["2-byte overwrite: read@GOT low16"]
+    E --> F["read@PLT now jumps to syscall; ret"]
+    F --> G["First syscall: read (returns 15)"]
+    G --> H["Second syscall: rt_sigreturn (rax=15)"]
+    H --> I["Load SigreturnFrame"]
+    I --> J["Set rax=59, rdi=/bin/sh, rip=read@PLT"]
+    J --> K["execve(/bin/sh,0,0)"]
+    K --> L["Read flag"]
+    L --> M["BITSCTF flag"]
 ```
 
 :::note[Flag]
@@ -202,22 +202,22 @@ expected_response = mask xor B
 
 ```mermaid
 flowchart TD
-    A[Firmware dump] --> B[Extract zImage payload]
-    B --> C[Extract initramfs cpio]
-    C --> D[Inspect /init]
-    D --> E[Find SUID /challenge/lock_app]
-    E --> F[Reverse reset routine]
-    F --> G[time seed -> shuffled S-box]
-    F --> H[/dev/urandom 4-byte mask]
-    G --> I[sub(rand1), sub(rand2)]
-    I --> J[A = ((sub1*31337 low32)+sub2) mod 1e6]
-    I --> K[B = (sub1 xor sub2) mod 1e6]
-    H --> L[challenge = mask xor A]
-    H --> M[response  = mask xor B]
-    L --> N[mask = challenge xor A]
-    N --> O[response = mask xor B]
-    O --> P[Send code to remote]
-    P --> Q[Gift prints flag]
+    A["Firmware dump"] --> B["Extract zImage payload"]
+    B --> C["Extract initramfs cpio"]
+    C --> D["Inspect /init"]
+    D --> E["Find SUID /challenge/lock_app"]
+    E --> F["Reverse reset routine"]
+    F --> G["Time seed to shuffled S-box"]
+    F --> H["/dev/urandom 4-byte mask"]
+    G --> I["sub(rand1), sub(rand2)"]
+    I --> J["A = ((sub1 * 31337) low32 + sub2) mod 1e6"]
+    I --> K["B = (sub1 xor sub2) mod 1e6"]
+    H --> L["challenge = mask xor A"]
+    H --> M["response = mask xor B"]
+    L --> N["mask = challenge xor A"]
+    N --> O["response = mask xor B"]
+    O --> P["Send code to remote"]
+    P --> Q["Gift prints flag"]
 ```
 
 :::important
@@ -240,5 +240,3 @@ BITSkrieg had a nice mix of “real bug” exploitation across very different en
 - Solana transaction logic (syntactic verification pitfalls)
 - a tiny pwn binary (pivots + SROP)
 - firmware reversing (initramfs + weak RNG)
-
-If you want, I can write separate deep-dive posts for each challenge (with cleaner diagrams and trimmed exploit code).
