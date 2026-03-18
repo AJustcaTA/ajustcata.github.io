@@ -28,6 +28,25 @@ I liked this pair a lot because it did not stop at one trick. It started with TP
 5. reject a convincing fake flag
 6. recover the real one from the wallpaper
 
+### How the provided files helped
+
+This challenge gave just enough hardware context to point me in the right direction.
+
+- `Sealed-Trace.7z` contained the real capture file: `Trace.csv`
+- `Sealed-Image.7z` contained the encrypted disk image: `Sealed.img`
+- `ModuleConnection-Front.jpg` and `ModuleConnection-Back.jpg` showed where the board was probed
+- `Settings.png` showed the logic analyzer configuration
+- `Channels.jpg` showed the probe channels used in the capture
+
+The two archive listings were already a good first checkpoint:
+
+```text
+Sealed-Trace.7z -> Trace.csv   2076135331 bytes
+Sealed-Image.7z -> Sealed.img 15423975424 bytes
+```
+
+That told me this was not a tiny toy dataset. The trace side was large enough to hold a real boot-time capture, and the image side was large enough to be a full Windows disk.
+
 ### What the challenge was really asking
 
 The prompt said H0p stored secrets on his computer, the disk dump was encrypted, and the "bits" had been monitored. The word *unseal* was the strongest clue in the whole prompt. It pushed me toward TPM language right away.
@@ -46,10 +65,35 @@ The board photos and channel captures looked like a low-pin-count synchronous se
 
 ![Board photo showing the captured hardware setup](/posts/polyu-ctf-2026-extra/sealed1-board.jpg)
 
+The front-side board photo was especially useful because it showed a probe board attached close to the flash / SPI area. The back-side photo helped confirm that this was an in-circuit tap, not just a random header connection.
+
+The settings screenshot also gave important context:
+
+- analyzer: `LA1010`
+- logic standard: `1.8V CMOS`
+- threshold: `0.90 V`
+- sample rate: `40 MHz`
+
+![Logic analyzer capture settings](/posts/polyu-ctf-2026-extra/sealed1-settings.png)
+
+That made the trace much easier to trust. This was a digital logic capture with a realistic threshold for low-voltage lines, not a blurry analog recording.
+
+`Channels.jpg` was less dramatic, but still useful. It showed that the challenge author expected us to think in terms of channel-to-signal mapping, even though the labels were generic (`CH0`-`CH15`) and not already named `MISO`, `MOSI`, or `CS` for us.
+
 On the storage side, the Windows partition showed the usual BitLocker signs, including the `-FVE-FS-` marker. At that point, the two halves of the challenge lined up cleanly:
 
 - TPM-related bus traffic on one side
 - a BitLocker-protected Windows volume on the other
+
+One small but useful output from the recovered partition header was:
+
+```text
+-FVE-FS- 3
+NTFS -1
+EFI PART -1
+```
+
+That was a nice sanity check. The small header sample already looked like BitLocker/FVE, not a plain NTFS partition.
 
 Even the disk layout helped. The main encrypted partition started at sector `239616`, so once I saw the BitLocker marker there, it became much easier to trust that the hardware trace and the disk image belonged to the same unlock chain.
 
@@ -63,6 +107,17 @@ The useful mindset here was:
 - identify framing first
 - isolate the transactions that look like boot-time secret handling
 - search for the output that lets BitLocker continue
+
+The extracted CSV also confirmed the capture format immediately. The first lines looked like this:
+
+```text
+Time[s], CH0, CH1, CH2, CH3
+0.000000000, 0, 0, 1, 1
+1.837230425, 1, 0, 1, 1
+1.837230475, 0, 0, 1, 1
+```
+
+So the archive was not hiding a proprietary analyzer project file. It gave a plain CSV export, which was much easier to script against.
 
 One simplified parser looked like this:
 
