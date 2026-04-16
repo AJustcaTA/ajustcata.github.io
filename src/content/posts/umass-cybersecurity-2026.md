@@ -1,5 +1,5 @@
 ---
-title: "UMass Cybersecurity 2026"
+title: "UMassCTF 2026"
 published: 2026-04-16
 description: "Factory Monitor writeup."
 tags: ["ctf", "umass", "pwn", "stack-overflow", "rop", "orw", "pwntools", "pie"]
