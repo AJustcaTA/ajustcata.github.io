@@ -291,7 +291,7 @@ The secrets change every session but always decode to 12 characters. One run gav
 [+] kernel secret: SUKSM3V9V5B4
 ```
 
-I typed both back in a phase-2 request. The response started with the marker `CBF2`, and I expected the flag as text after it. Wrong again - the bytes started with `89 50 4e 47`, the PNG signature. The server sent an image, not a string. I saved it, opened it, and the flag was written diagonally across the character:
+I typed both back in a phase-2 request. The response started with the marker `CBF2`, and I expected the flag as text after it. Wrong again - the bytes started with `89 50 4e 47`, the PNG signature. The server sent an image, not a string. I saved it, opened it, and the flag was written diagonally across Mikuuuu:
 
 ![Final server response - the flag written across the chibi character](/posts/sekaictf-2026/chibile-flag.png)
 
